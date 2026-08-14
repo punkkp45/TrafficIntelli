@@ -14,23 +14,68 @@ int ir[4][2] = {{23,22},{27,26},{31,30},{35,34}};
 int red[4]   = {24,28,32,36};
 int green[4] = {25,29,33,37};
 
-int count[4] = {0,0,0,0};
+// ================= TRAFFIC DATA =================
+
+int count[4] = {0, 0, 0, 0};
 int prev[4][2];
 
-int laneTime[4] = {30,30,30,30};
+// Vehicles cleared during CURRENT cycle
+int cleared[4] = {0, 0, 0, 0};
+
+// Vehicle count captured at START of cycle
+int cycleStartCount[4] = {0, 0, 0, 0};
+
+// 0 = Low, 1 = Medium, 2 = High
+int density[4] = {0, 0, 0, 0};
+
+// Extra green time
+int extraTime[4] = {0, 0, 0, 0};
+
+// Final green time
+int laneTime[4] = {30, 30, 30, 30};
 
 int currentLane = 0;
+
 unsigned long signalStart = 0;
+
+// ================= CYCLE =================
+
+int cycleNumber = 1;
+
+unsigned long cycleStartMillis = 0;
+unsigned long cycleEndMillis = 0;
+
+int cycleDuration = 120;
 
 bool densityMode = false;
 bool prevDensityMode = false;
 
-// EMERGENCY
+// ================= MODE =================
+
+bool autoMode = true;
+
+// ================= EMERGENCY =================
+
 bool emergencyActive = false;
+
 unsigned long emergencyStart = 0;
 
-int previousLane;
-int previousRemaining;
+int emergencyLane = -1;
+
+int previousLane = 0;
+int previousRemaining = 30;
+
+// Emergency information for current cycle
+bool cycleEmergencyDetected = false;
+int cycleEmergencyLane = -1;
+unsigned long cycleEmergencyOffset = 0;
+
+// Change this according to where your RFID reader is physically installed.
+// 0 = Lane 1
+// 1 = Lane 2
+// 2 = Lane 3
+// 3 = Lane 4
+const int RFID_LANE = 0;
 
 // SERIAL
 unsigned long serialTimer = 0;
@@ -39,6 +84,7 @@ unsigned long serialTimer = 0;
 void setup() {
   Serial.begin(9600);
   Serial1.begin(9600);
+  Serial1.setTimeout(50);
 
   SPI.begin();
   mfrc522.PCD_Init();
@@ -54,13 +100,14 @@ void setup() {
 
   setLane(0);
   signalStart = millis();
+  startNewCycle();
 }
 
 void loop() {
 
   readSensors();
   checkRFID();
-  readESP();   // 🔥 IMPORTANT
+  readESP();
 
   if(emergencyActive) handleEmergency();
   else controlTraffic();
@@ -70,38 +117,113 @@ void loop() {
 
 // SENSOR
 void readSensors(){
-  for(int i=0;i<4;i++){
+
+  for(int i = 0; i < 4; i++){
+
     int far = digitalRead(ir[i][0]);
     int near = digitalRead(ir[i][1]);
 
-    if(far==LOW && prev[i][0]==HIGH) count[i]++;
-    if(near==LOW && prev[i][1]==HIGH){
-      count[i]--;
-      if(count[i]<0) count[i]=0;
+    // Vehicle enters lane
+    if(far == LOW && prev[i][0] == HIGH){
+      count[i]++;
     }
 
-    prev[i][0]=far;
-    prev[i][1]=near;
+    // Vehicle exits lane
+    if(near == LOW && prev[i][1] == HIGH){
+
+      if(count[i] > 0){
+        count[i]--;
+        cleared[i]++;
+      }
+    }
+
+    prev[i][0] = far;
+    prev[i][1] = near;
   }
 }
 
 // 🔥 RECEIVE COMMAND FROM ESP
 void readESP(){
+
   if(Serial1.available()){
+
     String cmd = Serial1.readStringUntil('\n');
+
     cmd.trim();
 
     Serial.print("CMD RECEIVED → ");
     Serial.println(cmd);
 
-    if(cmd=="L1"){ setLane(0); }
-    if(cmd=="L2"){ setLane(1); }
-    if(cmd=="L3"){ setLane(2); }
-    if(cmd=="L4"){ setLane(3); }
+    // ================= MANUAL CONTROL =================
 
-    if(cmd=="EMG"){
-      emergencyActive = true;
-      emergencyStart = millis();
+    if(cmd == "L1"){
+      autoMode = false;
+      currentLane = 0;
+      setLane(currentLane);
+      signalStart = millis();
+    }
+
+    else if(cmd == "L2"){
+      autoMode = false;
+      currentLane = 1;
+      setLane(currentLane);
+      signalStart = millis();
+    }
+
+    else if(cmd == "L3"){
+      autoMode = false;
+      currentLane = 2;
+      setLane(currentLane);
+      signalStart = millis();
+    }
+
+    else if(cmd == "L4"){
+      autoMode = false;
+      currentLane = 3;
+      setLane(currentLane);
+      signalStart = millis();
+    }
+
+    // ================= AUTO =================
+
+    else if(cmd == "AUTO"){
+
+    autoMode = true;
+
+    currentLane = 0;
+
+    setLane(currentLane);
+
+    signalStart = millis();
+
+    startNewCycle();
+
+    Serial.println("AUTO MODE ENABLED");
+}
+    // ================= EMERGENCY =================
+
+    else if(cmd == "EMG"){
+
+      // Manual emergency without lane information.
+      // Current lane is used for now.
+      startEmergency(currentLane);
+    }
+
+    // Optional manual emergency lane commands
+    else if(cmd == "EMG1"){
+      startEmergency(0);
+    }
+
+    else if(cmd == "EMG2"){
+      startEmergency(1);
+    }
+
+    else if(cmd == "EMG3"){
+      startEmergency(2);
+    }
+
+    else if(cmd == "EMG4"){
+      startEmergency(3);
     }
   }
 }
@@ -109,90 +231,442 @@ void readESP(){
 // MODE
 void calculateTimes(){
 
+  // ==========================================
+  // PROPORTIONAL TRAFFIC CONTROL
+  // ==========================================
+
+  int total = 0;
+
+  cycleDuration = 0;
   densityMode = false;
 
-  for(int i=0;i<4;i++){
-    if(count[i] > 5){
+  // ------------------------------------------
+  // 1. Capture traffic at beginning of cycle
+  // ------------------------------------------
+
+  for(int i = 0; i < 4; i++){
+
+    cycleStartCount[i] = count[i];
+
+    total += count[i];
+  }
+
+  // ------------------------------------------
+  // 2. Reset timing values
+  // ------------------------------------------
+
+  for(int i = 0; i < 4; i++){
+
+    laneTime[i] = 30;
+    extraTime[i] = 0;
+    density[i] = 0;
+  }
+
+  // ------------------------------------------
+  // 3. Calculate proportional allocation
+  // ------------------------------------------
+
+  if(total > 0){
+
+    for(int i = 0; i < 4; i++){
+
+      /*
+        Maximum additional time = 30 seconds.
+
+        Proportion of traffic:
+        
+        lane count / total count
+
+        Additional time:
+
+        proportion × 30
+      */
+
+      int proportionalExtra =
+        (count[i] * 30) / total;
+
+      // Limit additional time to 30 seconds
+      if(proportionalExtra > 30)
+        proportionalExtra = 30;
+
+      extraTime[i] = proportionalExtra;
+
+      laneTime[i] = 30 + extraTime[i];
+
+      // --------------------------------------
+      // Density classification
+      // --------------------------------------
+
+      if(count[i] <= 10){
+
+        density[i] = 0;       // LOW
+      }
+
+      else if(count[i] <= 20){
+
+        density[i] = 1;       // MEDIUM
+      }
+
+      else{
+
+        density[i] = 2;       // HIGH
+      }
+    }
+  }
+
+  // ------------------------------------------
+  // 4. Determine whether adaptive mode active
+  // ------------------------------------------
+
+  for(int i = 0; i < 4; i++){
+
+    if(count[i] > 10){
+
       densityMode = true;
       break;
     }
   }
 
+  // ------------------------------------------
+  // 5. Calculate complete cycle duration
+  // ------------------------------------------
+
+  for(int i = 0; i < 4; i++){
+
+    cycleDuration += laneTime[i];
+  }
+
+  // ------------------------------------------
+  // 6. Serial monitoring
+  // ------------------------------------------
+
+  Serial.println();
+  Serial.println("========== TRAFFIC ANALYSIS ==========");
+
+  Serial.print("Cycle: ");
+  Serial.println(cycleNumber);
+
+  Serial.print("Total Vehicles: ");
+  Serial.println(total);
+
+  for(int i = 0; i < 4; i++){
+
+    Serial.print("L");
+    Serial.print(i + 1);
+
+    Serial.print(" | Vehicles: ");
+    Serial.print(count[i]);
+
+    Serial.print(" | Density: ");
+
+    if(density[i] == 0)
+      Serial.print("LOW");
+
+    else if(density[i] == 1)
+      Serial.print("MEDIUM");
+
+    else
+      Serial.print("HIGH");
+
+    Serial.print(" | Extra: +");
+    Serial.print(extraTime[i]);
+
+    Serial.print("s | Green: ");
+    Serial.print(laneTime[i]);
+    Serial.println("s");
+  }
+
+  Serial.print("TOTAL CYCLE TIME: ");
+  Serial.print(cycleDuration);
+  Serial.println(" seconds");
+
+  Serial.println("=======================================");
+
   if(densityMode != prevDensityMode){
-    Serial.println(densityMode ? "⚡ DENSITY MODE" : "✅ NORMAL MODE");
+
+    Serial.println(
+      densityMode
+      ? "⚡ ADAPTIVE TRAFFIC MODE"
+      : "✅ NORMAL TRAFFIC MODE"
+    );
+
     prevDensityMode = densityMode;
-  }
-
-  if(!densityMode){
-    for(int i=0;i<4;i++) laneTime[i] = 30;
-    return;
-  }
-
-  int total = count[0]+count[1]+count[2]+count[3];
-
-  for(int i=0;i<4;i++) laneTime[i] = 30;
-
-  if(total == 0) return;
-
-  for(int i=0;i<4;i++){
-    laneTime[i] += (count[i] * 30) / total;
   }
 }
 
+void startNewCycle(){
+
+  cycleStartMillis = millis();
+
+  // Reset cycle-specific values
+  for(int i = 0; i < 4; i++){
+    cleared[i] = 0;
+  }
+
+  cycleEmergencyDetected = false;
+  cycleEmergencyLane = -1;
+  cycleEmergencyOffset = 0;
+
+  // Calculate traffic conditions for this cycle
+  calculateTimes();
+
+  Serial.print("===== CYCLE ");
+  Serial.print(cycleNumber);
+  Serial.println(" START =====");
+}
 // RFID
 void checkRFID(){
 
-  if(!mfrc522.PICC_IsNewCardPresent()) return;
-  if(!mfrc522.PICC_ReadCardSerial()) return;
+  if(!mfrc522.PICC_IsNewCardPresent())
+    return;
+
+  if(!mfrc522.PICC_ReadCardSerial())
+    return;
 
   bool match = true;
-  for(byte i=0;i<4;i++){
+
+  for(byte i = 0; i < 4; i++){
+
     if(mfrc522.uid.uidByte[i] != emergencyUID[i]){
+
       match = false;
       break;
     }
   }
 
   if(match){
+
     Serial.println("🚑 EMERGENCY RFID");
 
-    previousLane = currentLane;
-    previousRemaining = laneTime[currentLane] - (millis()-signalStart)/1000;
-
-    emergencyActive = true;
-    emergencyStart = millis();
+    startEmergency(RFID_LANE);
   }
 
   mfrc522.PICC_HaltA();
+  mfrc522.PCD_StopCrypto1();
 }
 
+void startEmergency(int lane){
+
+  if(emergencyActive)
+    return;
+
+  // Save current traffic state
+  previousLane = currentLane;
+
+  int elapsed =
+    (millis() - signalStart) / 1000;
+
+  previousRemaining =
+    laneTime[currentLane] - elapsed;
+
+  if(previousRemaining < 0)
+    previousRemaining = 0;
+
+  // Emergency information
+  emergencyLane = lane;
+
+  emergencyActive = true;
+
+  emergencyStart = millis();
+
+  // Record emergency in current cycle
+  cycleEmergencyDetected = true;
+  cycleEmergencyLane = lane;
+
+  cycleEmergencyOffset =
+    (millis() - cycleStartMillis) / 1000;
+
+  Serial.print("🚑 Emergency Lane: ");
+  Serial.println(lane + 1);
+
+  Serial.print("Returning to Lane: ");
+  Serial.println(previousLane + 1);
+
+  Serial.print("Remaining Time: ");
+  Serial.println(previousRemaining);
+}
 // TRAFFIC
 void controlTraffic(){
+  if(!autoMode)
+    return;
+  unsigned long elapsed =
+    (millis() - signalStart) / 1000;
 
-  if(currentLane == 0 && (millis()-signalStart)/1000 == 0){
-    calculateTimes();
-  }
+  if(elapsed >= laneTime[currentLane]){
+    // If Lane 4 has finished,
+    // the COMPLETE cycle has finished.
+    if(currentLane == 3){
+      finishCycle();
+      cycleNumber++;
+      currentLane = 0;
+      setLane(currentLane);
+      signalStart = millis();
+      startNewCycle();
+    }
 
-  if((millis()-signalStart)/1000 >= laneTime[currentLane]){
-    currentLane = (currentLane + 1) % 4;
-    setLane(currentLane);
-    signalStart = millis();
+    else{
+      currentLane++;
+      setLane(currentLane);
+      signalStart = millis();
+    }
   }
 }
 
+void finishCycle(){
+
+  cycleEndMillis = millis();
+
+  Serial.println();
+  Serial.println("========== CYCLE COMPLETE ==========");
+
+  Serial.print("Cycle Number: ");
+  Serial.println(cycleNumber);
+
+  Serial.print("Cycle Duration: ");
+  Serial.print(cycleDuration);
+  Serial.println(" sec");
+
+  Serial.println("Vehicle Count at Start:");
+
+  for(int i = 0; i < 4; i++){
+
+    Serial.print("L");
+    Serial.print(i + 1);
+    Serial.print(": ");
+    Serial.println(cycleStartCount[i]);
+  }
+
+  Serial.println("Vehicles Cleared:");
+
+  for(int i = 0; i < 4; i++){
+
+    Serial.print("L");
+    Serial.print(i + 1);
+    Serial.print(": ");
+    Serial.println(cleared[i]);
+  }
+
+  Serial.println("Vehicles Remaining:");
+
+  for(int i = 0; i < 4; i++){
+
+    Serial.print("L");
+    Serial.print(i + 1);
+    Serial.print(": ");
+    Serial.println(count[i]);
+  }
+
+  Serial.println("====================================");
+
+  // Send cycle record to USB Serial.
+  // ESP8266 integration will be added in Phase 2.
+  sendCycleData();
+}
+// ================= SEND CYCLE DATA =================
+
+void sendCycleData(){
+
+  String data = "CYCLE|";
+
+  // Cycle number
+  data += String(cycleNumber);
+  data += "|";
+
+  // Planned cycle duration
+  data += String(cycleDuration);
+  data += "|";
+
+  // ================= VEHICLE COUNT =================
+
+  for(int i = 0; i < 4; i++){
+    data += String(cycleStartCount[i]);
+    data += "|";
+  }
+
+  // ================= DENSITY =================
+
+  for(int i = 0; i < 4; i++){
+
+    if(density[i] == 0)
+      data += "LOW";
+
+    else if(density[i] == 1)
+      data += "MEDIUM";
+
+    else
+      data += "HIGH";
+
+    data += "|";
+  }
+
+  // ================= GREEN TIME =================
+
+  for(int i = 0; i < 4; i++){
+    data += String(laneTime[i]);
+    data += "|";
+  }
+
+  // ================= EXTRA TIME =================
+
+  for(int i = 0; i < 4; i++){
+    data += String(extraTime[i]);
+    data += "|";
+  }
+
+  // ================= VEHICLES CLEARED =================
+
+  for(int i = 0; i < 4; i++){
+    data += String(cleared[i]);
+    data += "|";
+  }
+
+  // ================= VEHICLES REMAINING =================
+
+  for(int i = 0; i < 4; i++){
+    data += String(count[i]);
+    data += "|";
+  }
+
+  // ================= EMERGENCY =================
+
+  data += String(cycleEmergencyDetected ? 1 : 0);
+  data += "|";
+
+  data += String(cycleEmergencyLane + 1);
+  data += "|";
+
+  data += String(cycleEmergencyOffset);
+
+  // ================= SEND =================
+
+  Serial.println("===== CYCLE DATA =====");
+  Serial.println(data);
+  Serial.println("======================");
+}
 // EMERGENCY
 void handleEmergency(){
 
-  setLane(0);
+  // Give green to emergency lane
+  setLane(emergencyLane);
 
-  if((millis() - emergencyStart) > 20000){
+  // Emergency green = 20 seconds
+  if((millis() - emergencyStart) >= 20000){
 
     emergencyActive = false;
 
+    // Return to previous lane
     currentLane = previousLane;
+
     setLane(currentLane);
 
-    signalStart = millis() - (laneTime[currentLane] - previousRemaining)*1000;
+    // Resume previous lane from where it stopped
+    signalStart =
+      millis() -
+      (laneTime[currentLane] - previousRemaining) * 1000UL;
+
+    Serial.println("🚑 Emergency Complete");
+    Serial.print("Resuming Lane: ");
+    Serial.println(currentLane + 1);
   }
 }
 
