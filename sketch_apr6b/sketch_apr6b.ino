@@ -1,8 +1,10 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <ESP8266HTTPClient.h>
 
 const char* ssid = "PUNK GT 6";
 const char* password = "punkgt.exe";
+const char* apiURL = "http://10.163.100.90:8000/traffic/cycle";
 
 ESP8266WebServer server(80);
 String displayData = "";
@@ -231,6 +233,43 @@ setInterval(update,1000);
 </html>
 )rawliteral";
 }
+void sendCycleToAPI(String cycleData){
+
+  if(WiFi.status() != WL_CONNECTED){
+    Serial.println("API ERROR: WiFi disconnected");
+    return;
+  }
+
+  WiFiClient client;
+  HTTPClient http;
+
+  http.begin(client, apiURL);
+
+  http.addHeader("Content-Type", "text/plain");
+
+  Serial.println("Sending cycle data to API...");
+
+  int httpCode = http.POST(cycleData);
+
+  if(httpCode > 0){
+
+    Serial.print("API Response Code: ");
+    Serial.println(httpCode);
+
+    String response = http.getString();
+
+    Serial.print("API Response: ");
+    Serial.println(response);
+
+  }
+  else{
+
+    Serial.print("API Connection Failed: ");
+    Serial.println(http.errorToString(httpCode));
+  }
+
+  http.end();
+}
 
 // ===== SETUP =====
 void setup(){
@@ -295,7 +334,18 @@ void loop(){
   server.handleClient();
 
   if(Serial.available()){
-    displayData = Serial.readStringUntil('\n');
-    displayData.trim();
+
+    String incomingData = Serial.readStringUntil('\n');
+    incomingData.trim();
+
+    if(incomingData.startsWith("CYCLE|")){
+
+      sendCycleToAPI(incomingData);
+
+    }
+    else{
+
+      displayData = incomingData;
+    }
   }
 }

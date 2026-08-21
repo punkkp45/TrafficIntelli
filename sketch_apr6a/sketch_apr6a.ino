@@ -572,76 +572,75 @@ void sendCycleData(){
   data += String(cycleNumber);
   data += "|";
 
-  // Planned cycle duration
+  // Cycle duration
   data += String(cycleDuration);
   data += "|";
 
-  // ================= VEHICLE COUNT =================
-
+  // Vehicle count at start of cycle
   for(int i = 0; i < 4; i++){
     data += String(cycleStartCount[i]);
     data += "|";
   }
 
-  // ================= DENSITY =================
-
+  // Density
   for(int i = 0; i < 4; i++){
 
     if(density[i] == 0)
       data += "LOW";
-
     else if(density[i] == 1)
       data += "MEDIUM";
-
     else
       data += "HIGH";
 
     data += "|";
   }
 
-  // ================= GREEN TIME =================
-
+  // Green time
   for(int i = 0; i < 4; i++){
     data += String(laneTime[i]);
     data += "|";
   }
 
-  // ================= EXTRA TIME =================
-
+  // Extra green time
   for(int i = 0; i < 4; i++){
     data += String(extraTime[i]);
     data += "|";
   }
 
-  // ================= VEHICLES CLEARED =================
-
+  // Vehicles cleared
   for(int i = 0; i < 4; i++){
     data += String(cleared[i]);
     data += "|";
   }
 
-  // ================= VEHICLES REMAINING =================
-
+  // Vehicles remaining
   for(int i = 0; i < 4; i++){
     data += String(count[i]);
     data += "|";
   }
 
-  // ================= EMERGENCY =================
-
+  // Emergency detected
   data += String(cycleEmergencyDetected ? 1 : 0);
   data += "|";
 
-  data += String(cycleEmergencyLane + 1);
+  // Emergency lane
+  if(cycleEmergencyDetected)
+    data += String(cycleEmergencyLane + 1);
+  else
+    data += "0";
+
   data += "|";
 
+  // Emergency offset/time
   data += String(cycleEmergencyOffset);
 
-  // ================= SEND =================
+  // Send to ESP8266
+  Serial1.println(data);
 
-  Serial.println("===== CYCLE DATA =====");
+  // Also display on Mega Serial Monitor
+  Serial.println("===== CYCLE DATA SENT =====");
   Serial.println(data);
-  Serial.println("======================");
+  Serial.println("===========================");
 }
 // EMERGENCY
 void handleEmergency(){

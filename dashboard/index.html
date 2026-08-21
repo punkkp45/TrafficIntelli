@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>TrafficIntelli | Traffic Control</title>
+
+  <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+
+  <!-- =====================================================
+     SIDEBAR
+===================================================== -->
+
+  <aside class="sidebar">
+
+    <div class="logo">
+
+      <div class="logo-mark">
+        TI
+      </div>
+
+      <div>
+
+        <h2>TrafficIntelli</h2>
+
+        <span>
+          Smart Traffic Control
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <nav id="sidebarNav">
+
+      <a href="#" class="nav-item active" data-section="dashboard">
+        <span>▦</span>
+        Dashboard
+      </a>
+
+      <a href="#" class="nav-item" data-section="live">
+        <span>◉</span>
+        Live Traffic
+      </a>
+
+      <a href="#" class="nav-item" data-section="analytics">
+        <span>⌁</span>
+        Analytics
+      </a>
+
+      <a href="#" class="nav-item" data-section="predictions">
+        <span>◈</span>
+        Predictions
+      </a>
+
+      <a href="#" class="nav-item" data-section="history">
+        <span>▤</span>
+        Cycle History
+      </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+      <div class="connection-box">
+
+        <span class="connection-dot"></span>
+
+        <div>
+
+          <strong>System Online</strong>
+
+          <small>
+            API Connected
+          </small>
+
+        </div>
+
+      </div>
+
+      <span class="version">
+        TrafficIntelli v2.0
+      </span>
+
+    </div>
+
+  </aside>
+
+
+
+  <!-- =====================================================
+     MAIN CONTENT
+===================================================== -->
+
+  <main class="main-content">
+
+
+    <!-- HEADER -->
+
+    <header class="page-header">
+
+      <div>
+
+        <span class="eyebrow">
+          TRAFFIC MANAGEMENT SYSTEM
+        </span>
+
+        <h1>
+          Control Dashboard
+        </h1>
+
+        <p>
+          Real-time traffic monitoring and adaptive signal control
+        </p>
+
+      </div>
+
+
+      <div class="header-right">
+
+        <div class="date-box">
+
+          <span id="currentDate">
+            21 Aug 2026
+          </span>
+
+          <strong id="currentTime">
+            11:45:32
+          </strong>
+
+        </div>
+
+      </div>
+
+    </header>
+
+
+
+    <!-- =================================================
+         KPI CARDS
+    ================================================== -->
+
+    <section class="kpi-grid">
+
+
+      <div class="kpi-card">
+
+        <div class="kpi-icon blue">
+          #
+        </div>
+
+        <div>
+
+          <span class="kpi-label">
+            CURRENT CYCLE
+          </span>
+
+          <strong id="cycleNumber">
+            24
+          </strong>
+
+          <small>
+            Active cycle
+          </small>
+
+        </div>
+
+      </div>
+
+
+
+      <div class="kpi-card">
+
+        <div class="kpi-icon teal">
+          ◷
+        </div>
+
+        <div>
+
+          <span class="kpi-label">
+            CYCLE DURATION
+          </span>
+
+          <strong>
+            <span id="cycleDuration">150</span>s
+          </strong>
+
+          <small>
+            Adaptive timing
+          </small>
+
+        </div>
+
+      </div>
+
+
+
+      <div class="kpi-card">
+
+        <div class="kpi-icon orange">
+          🚗
+        </div>
+
+        <div>
+
+          <span class="kpi-label">
+            VEHICLES
+          </span>
+
+          <strong id="totalVehicles">
+            68
+          </strong>
+
+          <small>
+            Current cycle
+          </small>
+
+        </div>
+
+      </div>
+
+
+
+      <div class="kpi-card">
+
+        <div class="kpi-icon purple">
+          AI
+        </div>
+
+        <div>
+
+          <span class="kpi-label">
+            CONTROL MODE
+          </span>
+
+          <strong class="adaptive">
+            ADAPTIVE
+          </strong>
+
+          <small>
+            Predictive enabled
+          </small>
+
+        </div>
+
+      </div>
+
+
+    </section>
+
+
+
+    <!-- =================================================
+         LIVE JUNCTION + LANE STATUS
+    ================================================== -->
+
+    <section class="top-grid">
+
+
+      <!-- JUNCTION -->
+
+      <div class="panel junction-panel">
+
+        <div class="panel-header">
+
+          <div>
+
+            <h2>
+              Live Junction
+            </h2>
+
+            <p>
+              Current signal configuration
+            </p>
+
+          </div>
+
+
+          <div class="live-indicator">
+
+            <span></span>
+
+            LIVE
+
+          </div>
+
+        </div>
+
+
+        <div class="junction-area">
+
+
+          <!-- ROAD -->
+
+          <div class="road vertical-road"></div>
+
+          <div class="road horizontal-road"></div>
+
+
+          <!-- CENTER -->
+
+          <div class="junction-center">
+
+            <span>
+              INTERSECTION
+            </span>
+
+          </div>
+
+
+          <!-- L1 TOP -->
+
+          <div class="lane lane-1">
+
+            <div class="lane-name">
+              L1
+            </div>
+
+            <div class="signal" id="signal1">
+
+              <span class="red"></span>
+              <span class="yellow"></span>
+              <span class="green"></span>
+
+            </div>
+
+          </div>
+
+
+          <!-- L2 LEFT -->
+
+          <div class="lane lane-2">
+
+            <div class="lane-name">
+              L2
+            </div>
+
+            <div class="signal" id="signal2">
+
+              <span class="red"></span>
+              <span class="yellow"></span>
+              <span class="green"></span>
+
+            </div>
+
+          </div>
+
+
+          <!-- L3 BOTTOM -->
+
+          <div class="lane lane-3">
+
+            <div class="lane-name">
+              L3
+            </div>
+
+            <div class="signal" id="signal3">
+
+              <span class="red"></span>
+              <span class="yellow"></span>
+              <span class="green"></span>
+
+            </div>
+
+          </div>
+
+
+          <!-- L4 RIGHT -->
+
+          <div class="lane lane-4">
+
+            <div class="lane-name">
+              L4
+            </div>
+
+            <div class="signal" id="signal4">
+
+              <span class="red"></span>
+              <span class="yellow"></span>
+              <span class="green"></span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="junction-legend">
+
+          <span>
+            <i class="legend-green"></i>
+            Green
+          </span>
+
+          <span>
+            <i class="legend-red"></i>
+            Red
+          </span>
+
+          <span>
+            <i class="legend-yellow"></i>
+            Transition
+          </span>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- LANE STATUS -->
+
+      <div class="panel lane-panel">
+
+        <div class="panel-header">
+
+          <div>
+
+            <h2>
+              Lane Status
+            </h2>
+
+            <p>
+              Vehicle density and signal timing
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div id="laneList" class="lane-list">
+
+        </div>
+
+      </div>
+
+
+    </section>
+
+
+
+    <!-- =================================================
+         PREDICTIVE CONTROL
+    ================================================== -->
+
+    <section class="panel prediction-panel">
+
+      <div class="panel-header">
+
+        <div>
+
+          <div class="section-title-row">
+
+            <span class="ai-tag">
+              AI
+            </span>
+
+            <h2>
+              Predictive Traffic Control
+            </h2>
+
+          </div>
+
+          <p>
+            Predicted traffic conditions for the upcoming cycle
+          </p>
+
+        </div>
+
+
+        <span class="prediction-status">
+          MODEL ACTIVE
+        </span>
+
+      </div>
+
+
+      <div class="prediction-grid">
+
+
+        <div class="prediction-item">
+
+          <span>
+            CURRENT CONGESTION
+          </span>
+
+          <strong id="currentHighLane">
+            L2
+          </strong>
+
+          <small>
+            Highest traffic density
+          </small>
+
+        </div>
+
+
+        <div class="prediction-item">
+
+          <span>
+            PREDICTED LANE
+          </span>
+
+          <strong id="predictedLane">
+            L2
+          </strong>
+
+          <small>
+            Next-cycle prediction
+          </small>
+
+        </div>
+
+
+        <div class="prediction-item">
+
+          <span>
+            RECOMMENDED GREEN
+          </span>
+
+          <strong>
+            <span id="recommendedGreen">
+              50
+            </span>s
+          </strong>
+
+          <small>
+            Suggested signal allocation
+          </small>
+
+        </div>
+
+
+        <div class="prediction-item">
+
+          <span>
+            CONFIDENCE
+          </span>
+
+          <strong>
+            <span id="confidence">
+              87
+            </span>%
+          </strong>
+
+          <small>
+            Model confidence
+          </small>
+
+        </div>
+
+
+      </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         ANALYTICS
+    ================================================== -->
+
+    <section class="analytics-grid">
+
+
+      <!-- TRAFFIC DISTRIBUTION -->
+
+      <div class="panel">
+
+        <div class="panel-header">
+
+          <div>
+
+            <h2>
+              Traffic Distribution
+            </h2>
+
+            <p>
+              Vehicles detected by lane
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div id="trafficChart" class="traffic-chart">
+
+        </div>
+
+      </div>
+
+
+
+      <!-- CYCLE DETAILS -->
+
+      <div class="panel">
+
+        <div class="panel-header">
+
+          <div>
+
+            <h2>
+              Current Cycle
+            </h2>
+
+            <p>
+              Adaptive signal allocation
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="cycle-details">
+
+
+          <div>
+
+            <span>
+              Start Time
+            </span>
+
+            <strong id="startTime">
+              11:30:00
+            </strong>
+
+          </div>
+
+
+          <div>
+
+            <span>
+              End Time
+            </span>
+
+            <strong id="endTime">
+              11:32:30
+            </strong>
+
+          </div>
+
+
+          <div>
+
+            <span>
+              Extended Lanes
+            </span>
+
+            <strong id="extendedLanes">
+              L2, L4
+            </strong>
+
+          </div>
+
+
+          <div>
+
+            <span>
+              Extra Time
+            </span>
+
+            <strong id="extensionTime">
+              +30 sec
+            </strong>
+
+          </div>
+
+
+          <div>
+
+            <span>
+              Vehicles Cleared
+            </span>
+
+            <strong id="vehiclesCleared">
+              58
+            </strong>
+
+          </div>
+
+
+          <div>
+
+            <span>
+              Vehicles Remaining
+            </span>
+
+            <strong id="vehiclesRemaining">
+              10
+            </strong>
+
+          </div>
+
+
+        </div>
+
+      </div>
+
+
+    </section>
+
+
+
+    <!-- =================================================
+         EMERGENCY
+    ================================================== -->
+
+    <section class="emergency-card" id="emergencyPanel">
+
+      <div class="emergency-symbol">
+        🚑
+      </div>
+
+      <div>
+
+        <h3>
+          Emergency Vehicle System
+        </h3>
+
+        <p id="emergencyStatus">
+          No emergency vehicle detected
+        </p>
+
+      </div>
+
+
+      <div class="emergency-state" id="emergencyBadge">
+
+        CLEAR
+
+      </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         RECENT CYCLES
+    ================================================== -->
+
+    <section class="panel history-panel">
+
+      <div class="panel-header">
+
+        <div>
+
+          <h2>
+            Recent Cycles
+          </h2>
+
+          <p>
+            Latest traffic control records
+          </p>
+
+        </div>
+
+
+        <button class="view-button">
+          View All
+        </button>
+
+      </div>
+
+
+      <div class="table-container">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>
+                Cycle
+              </th>
+
+              <th>
+                Duration
+              </th>
+
+              <th>
+                Vehicles
+              </th>
+
+              <th>
+                Extended Lanes
+              </th>
+
+              <th>
+                Emergency
+              </th>
+
+              <th>
+                Status
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody id="cycleTable">
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- FOOTER -->
+
+    <footer>
+
+      <span>
+        TrafficIntelli
+      </span>
+
+      <span>
+        Predictive Traffic Control System
+      </span>
+
+      <span>
+        v2.0
+      </span>
+
+    </footer>
+
+
+  </main>
+
+
+  <script src="script.js"></script>
+
+</body>
+
+</html>

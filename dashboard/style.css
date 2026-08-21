@@ -1,0 +1,2246 @@
+/* =====================================================
+   TRAFFICINTELLI
+   PROFESSIONAL TRAFFIC MANAGEMENT UI
+===================================================== */
+
+
+/* =====================================================
+   RESET
+===================================================== */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+
+body {
+
+    font-family:
+        "Segoe UI",
+        Inter,
+        Arial,
+        sans-serif;
+
+    background: #f4f7fa;
+
+    color: #172033;
+
+    min-height: 100vh;
+
+}
+
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.sidebar {
+
+    position: fixed;
+
+    left: 0;
+
+    top: 0;
+
+    width: 240px;
+
+    height: 100vh;
+
+    background: #172033;
+
+    color: white;
+
+    display: flex;
+
+    flex-direction: column;
+
+    padding: 24px 16px;
+
+    z-index: 100;
+
+}
+
+
+.logo {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 0 10px 28px;
+
+    border-bottom:
+        1px solid rgba(255, 255, 255, 0.08);
+
+}
+
+
+.logo-mark {
+
+    width: 42px;
+
+    height: 42px;
+
+    border-radius: 9px;
+
+    background: #1677ff;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-weight: 800;
+
+    font-size: 14px;
+
+}
+
+
+.logo h2 {
+
+    font-size: 17px;
+
+    font-weight: 700;
+
+}
+
+
+.logo span {
+
+    display: block;
+
+    color: #8d98aa;
+
+    font-size: 10px;
+
+    margin-top: 3px;
+
+}
+
+
+nav {
+
+    margin-top: 25px;
+
+}
+
+
+.nav-item {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    height: 45px;
+
+    padding: 0 13px;
+
+    margin-bottom: 6px;
+
+    border-radius: 8px;
+
+    color: #9ba6b8;
+
+    text-decoration: none;
+
+    font-size: 13px;
+
+    cursor: pointer;
+
+}
+
+
+.nav-item span {
+
+    width: 18px;
+
+    text-align: center;
+
+    font-size: 15px;
+
+}
+
+
+.nav-item.active {
+
+    color: white;
+
+    background: #236ed8;
+
+}
+
+
+.nav-item:hover {
+
+    background: rgba(255, 255, 255, 0.06);
+
+    color: white;
+
+}
+
+
+.sidebar-bottom {
+
+    margin-top: auto;
+
+}
+
+
+.connection-box {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 12px;
+
+    border-radius: 8px;
+
+    background: rgba(255, 255, 255, 0.05);
+
+}
+
+
+.connection-dot {
+
+    width: 8px;
+
+    height: 8px;
+
+    background: #20b26b;
+
+    border-radius: 50%;
+
+}
+
+
+.connection-box strong {
+
+    display: block;
+
+    font-size: 11px;
+
+}
+
+
+.connection-box small {
+
+    color: #7f8b9f;
+
+    font-size: 9px;
+
+}
+
+
+.version {
+
+    display: block;
+
+    text-align: center;
+
+    margin-top: 14px;
+
+    color: #657084;
+
+    font-size: 9px;
+
+}
+
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.main-content {
+
+    margin-left: 240px;
+
+    padding: 30px 38px;
+
+    max-width: 1600px;
+
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.page-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-bottom: 28px;
+
+}
+
+
+.eyebrow {
+
+    color: #1677ff;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    letter-spacing: 1.2px;
+
+}
+
+
+.page-header h1 {
+
+    font-size: 27px;
+
+    margin-top: 5px;
+
+    color: #172033;
+
+}
+
+
+.page-header p {
+
+    color: #778397;
+
+    font-size: 12px;
+
+    margin-top: 5px;
+
+}
+
+
+.date-box {
+
+    text-align: right;
+
+}
+
+
+.date-box span {
+
+    display: block;
+
+    color: #7d8899;
+
+    font-size: 11px;
+
+}
+
+
+.date-box strong {
+
+    display: block;
+
+    color: #172033;
+
+    font-size: 16px;
+
+    margin-top: 3px;
+
+}
+
+
+/* =====================================================
+   KPI
+===================================================== */
+
+.kpi-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 16px;
+
+    margin-bottom: 18px;
+
+}
+
+
+.kpi-card {
+
+    background: white;
+
+    border: 1px solid #e3e8ef;
+
+    border-radius: 10px;
+
+    padding: 18px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    box-shadow:
+        0 2px 7px rgba(30, 50, 80, 0.03);
+
+}
+
+
+.kpi-icon {
+
+    width: 42px;
+
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 9px;
+
+    font-size: 15px;
+
+    font-weight: 800;
+
+}
+
+
+.kpi-icon.blue {
+
+    color: #1677ff;
+
+    background: #eaf3ff;
+
+}
+
+
+.kpi-icon.teal {
+
+    color: #008c95;
+
+    background: #e5f8f9;
+
+}
+
+
+.kpi-icon.orange {
+
+    color: #d97706;
+
+    background: #fff4df;
+
+}
+
+
+.kpi-icon.purple {
+
+    color: #7c3aed;
+
+    background: #f1eaff;
+
+}
+
+
+.kpi-label {
+
+    display: block;
+
+    color: #8a95a6;
+
+    font-size: 9px;
+
+    font-weight: 700;
+
+    letter-spacing: .7px;
+
+}
+
+
+.kpi-card strong {
+
+    display: block;
+
+    color: #172033;
+
+    font-size: 23px;
+
+    margin-top: 4px;
+
+}
+
+
+.kpi-card small {
+
+    display: block;
+
+    color: #9aa3b2;
+
+    font-size: 9px;
+
+    margin-top: 2px;
+
+}
+
+
+.kpi-card .adaptive {
+
+    color: #1677ff;
+
+    font-size: 17px;
+
+}
+
+
+/* =====================================================
+   PANELS
+===================================================== */
+
+.panel {
+
+    background: white;
+
+    border: 1px solid #e3e8ef;
+
+    border-radius: 10px;
+
+    padding: 20px;
+
+    box-shadow:
+        0 2px 7px rgba(30, 50, 80, 0.03);
+
+}
+
+
+.panel-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-start;
+
+    margin-bottom: 18px;
+
+}
+
+
+.panel-header h2 {
+
+    font-size: 15px;
+
+    color: #1b263b;
+
+}
+
+
+.panel-header p {
+
+    font-size: 10px;
+
+    color: #8a95a6;
+
+    margin-top: 4px;
+
+}
+
+
+.top-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        1.2fr 1fr;
+
+    gap: 18px;
+
+    margin-bottom: 18px;
+
+}
+
+
+.live-indicator {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    color: #20a66a;
+
+    font-size: 9px;
+
+    font-weight: 700;
+
+}
+
+
+.live-indicator span {
+
+    width: 7px;
+
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: #20b26b;
+
+}
+
+
+/* =====================================================
+   JUNCTION
+===================================================== */
+
+.junction-area {
+
+    width: 440px;
+
+    height: 360px;
+
+    margin: 0 auto;
+
+    position: relative;
+
+    background: #dfe5eb;
+
+    border: 1px solid #d2d9e1;
+
+    overflow: hidden;
+
+}
+
+
+.road {
+
+    position: absolute;
+
+    background: #303944;
+
+}
+
+
+.vertical-road {
+
+    width: 120px;
+
+    height: 100%;
+
+    left: 160px;
+
+    top: 0;
+
+}
+
+
+.horizontal-road {
+
+    width: 100%;
+
+    height: 120px;
+
+    left: 0;
+
+    top: 120px;
+
+}
+
+
+.junction-area::before {
+
+    content: "";
+
+    position: absolute;
+
+    width: 2px;
+
+    height: 100%;
+
+    left: 219px;
+
+    top: 0;
+
+    z-index: 2;
+
+    background:
+        repeating-linear-gradient(to bottom,
+            #d7dde3 0px,
+            #d7dde3 18px,
+            transparent 18px,
+            transparent 34px);
+
+}
+
+
+.junction-area::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 100%;
+
+    height: 2px;
+
+    left: 0;
+
+    top: 179px;
+
+    z-index: 2;
+
+    background:
+        repeating-linear-gradient(to right,
+            #d7dde3 0px,
+            #d7dde3 18px,
+            transparent 18px,
+            transparent 34px);
+
+}
+
+
+.junction-center {
+
+    position: absolute;
+
+    width: 80px;
+
+    height: 80px;
+
+    left: 180px;
+
+    top: 140px;
+
+    z-index: 5;
+
+    background: #172033;
+
+    border: 3px solid #ffffff;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+}
+
+
+.junction-center span {
+
+    color: white;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    letter-spacing: .5px;
+
+}
+
+
+/* =====================================================
+   LANES
+   ANTI-CLOCKWISE:
+   L1 = TOP
+   L2 = LEFT
+   L3 = BOTTOM
+   L4 = RIGHT
+===================================================== */
+
+.lane {
+
+    position: absolute;
+
+    z-index: 10;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+}
+
+
+.lane-name {
+
+    color: white;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    margin-bottom: 6px;
+
+    background: #172033;
+
+    padding: 3px 7px;
+
+}
+
+
+.lane-1 {
+
+    top: 15px;
+
+    left: 197px;
+
+}
+
+
+.lane-2 {
+
+    left: 15px;
+
+    top: 155px;
+
+}
+
+
+.lane-3 {
+
+    bottom: 15px;
+
+    left: 197px;
+
+}
+
+
+.lane-4 {
+
+    right: 15px;
+
+    top: 155px;
+
+}
+
+
+/* =====================================================
+   SIGNAL
+===================================================== */
+
+.signal {
+
+    width: 30px;
+
+    padding: 5px;
+
+    border-radius: 15px;
+
+    background: #111821;
+
+    border: 2px solid #46505d;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 5px;
+
+}
+
+
+.signal span {
+
+    display: block;
+
+    width: 11px;
+
+    height: 11px;
+
+    border-radius: 50%;
+
+    background: #353d48;
+
+}
+
+
+/* ONLY ACTIVE LIGHT GETS COLOR */
+
+.signal .red.active {
+
+    background: #e23b45;
+
+    box-shadow:
+        0 0 8px rgba(226, 59, 69, .7);
+
+}
+
+
+.signal .yellow.active {
+
+    background: #e4a92f;
+
+    box-shadow:
+        0 0 8px rgba(228, 169, 47, .6);
+
+}
+
+
+.signal .green.active {
+
+    background: #20b26b;
+
+    box-shadow:
+        0 0 9px rgba(32, 178, 107, .7);
+
+}
+
+
+.junction-legend {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 22px;
+
+    margin-top: 16px;
+
+    color: #7e8999;
+
+    font-size: 10px;
+
+}
+
+
+.junction-legend span {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+}
+
+
+.junction-legend i {
+
+    width: 7px;
+
+    height: 7px;
+
+    border-radius: 50%;
+
+}
+
+
+.legend-green {
+
+    background: #20b26b;
+
+}
+
+
+.legend-red {
+
+    background: #e23b45;
+
+}
+
+
+.legend-yellow {
+
+    background: #e4a92f;
+
+}
+
+
+/* =====================================================
+   LANE STATUS
+===================================================== */
+
+.lane-list {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 9px;
+
+}
+
+
+.lane-row {
+
+    display: grid;
+
+    grid-template-columns:
+        45px 1fr 75px 65px;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 13px;
+
+    border: 1px solid #e7ebf0;
+
+    border-radius: 7px;
+
+}
+
+
+.lane-row.active {
+
+    border-color: #8dbbff;
+
+    background: #f5f9ff;
+
+}
+
+
+.lane-name-status {
+
+    color: #1677ff;
+
+    font-weight: 800;
+
+    font-size: 12px;
+
+}
+
+
+.vehicle-count {
+
+    font-size: 16px;
+
+    font-weight: 700;
+
+    color: #1c2638;
+
+}
+
+
+.vehicle-label {
+
+    color: #8a95a6;
+
+    font-size: 9px;
+
+}
+
+
+.density {
+
+    text-align: center;
+
+    font-size: 9px;
+
+    font-weight: 700;
+
+    padding: 5px 6px;
+
+    border-radius: 4px;
+
+}
+
+
+.density.low {
+
+    color: #168356;
+
+    background: #e8f7ef;
+
+}
+
+
+.density.medium {
+
+    color: #a36b00;
+
+    background: #fff4d9;
+
+}
+
+
+.density.high {
+
+    color: #c52d37;
+
+    background: #fdebed;
+
+}
+
+
+.time {
+
+    text-align: right;
+
+    color: #1677ff;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+}
+
+
+/* =====================================================
+   PREDICTION
+===================================================== */
+
+.prediction-panel {
+
+    margin-bottom: 18px;
+
+    border-left:
+        4px solid #1677ff;
+
+}
+
+
+.section-title-row {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+}
+
+
+.ai-tag {
+
+    background: #eaf3ff;
+
+    color: #1677ff;
+
+    padding: 4px 6px;
+
+    font-size: 8px;
+
+    font-weight: 800;
+
+    border-radius: 3px;
+
+}
+
+
+.prediction-status {
+
+    font-size: 9px;
+
+    font-weight: 700;
+
+    color: #1677ff;
+
+    background: #eaf3ff;
+
+    padding: 6px 9px;
+
+    border-radius: 4px;
+
+}
+
+
+.prediction-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    border-top: 1px solid #e8ecf1;
+
+}
+
+
+.prediction-item {
+
+    padding: 17px;
+
+    border-right:
+        1px solid #e8ecf1;
+
+}
+
+
+.prediction-item:last-child {
+
+    border-right: none;
+
+}
+
+
+.prediction-item span {
+
+    display: block;
+
+    color: #8a95a6;
+
+    font-size: 8px;
+
+    font-weight: 700;
+
+}
+
+
+.prediction-item strong {
+
+    display: block;
+
+    color: #1677ff;
+
+    font-size: 22px;
+
+    margin-top: 7px;
+
+}
+
+
+.prediction-item small {
+
+    color: #99a2b0;
+
+    font-size: 9px;
+
+}
+
+
+/* =====================================================
+   ANALYTICS
+===================================================== */
+
+.analytics-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        1.1fr 1fr;
+
+    gap: 18px;
+
+    margin-bottom: 18px;
+
+}
+
+
+.traffic-chart {
+
+    height: 210px;
+
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: space-evenly;
+
+    border-bottom:
+        1px solid #dfe5ec;
+
+    padding: 0 30px;
+
+}
+
+
+.bar-container {
+
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: flex-end;
+
+    align-items: center;
+
+    gap: 6px;
+
+}
+
+
+.bar {
+
+    width: 38px;
+
+    background: #3182ce;
+
+    border-radius:
+        4px 4px 0 0;
+
+}
+
+
+.bar-value {
+
+    font-size: 10px;
+
+    color: #677386;
+
+}
+
+
+.bar-label {
+
+    font-size: 10px;
+
+    color: #7f8a9a;
+
+    margin-bottom: -18px;
+
+}
+
+
+/* =====================================================
+   CYCLE DETAILS
+===================================================== */
+
+.cycle-details {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 1px;
+
+    background: #e6ebf0;
+
+    border: 1px solid #e6ebf0;
+
+}
+
+
+.cycle-details div {
+
+    background: white;
+
+    padding: 13px;
+
+}
+
+
+.cycle-details span {
+
+    display: block;
+
+    color: #8a95a6;
+
+    font-size: 9px;
+
+}
+
+
+.cycle-details strong {
+
+    display: block;
+
+    color: #263249;
+
+    font-size: 12px;
+
+    margin-top: 4px;
+
+}
+
+
+/* =====================================================
+   EMERGENCY
+===================================================== */
+
+.emergency-card {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    padding: 14px 18px;
+
+    margin-bottom: 18px;
+
+    background: white;
+
+    border:
+        1px solid #e3e8ef;
+
+    border-radius: 9px;
+
+}
+
+
+.emergency-symbol {
+
+    width: 38px;
+
+    height: 38px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #fff2f2;
+
+    border-radius: 7px;
+
+}
+
+
+.emergency-card h3 {
+
+    font-size: 12px;
+
+}
+
+
+.emergency-card p {
+
+    font-size: 9px;
+
+    color: #8994a5;
+
+    margin-top: 3px;
+
+}
+
+
+.emergency-state {
+
+    margin-left: auto;
+
+    color: #168356;
+
+    background: #e8f7ef;
+
+    padding: 6px 10px;
+
+    border-radius: 4px;
+
+    font-size: 8px;
+
+    font-weight: 800;
+
+}
+
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+.history-panel {
+
+    margin-bottom: 25px;
+
+}
+
+
+.view-button {
+
+    border: 1px solid #d8e0e9;
+
+    background: white;
+
+    color: #477093;
+
+    padding: 7px 11px;
+
+    border-radius: 5px;
+
+    font-size: 9px;
+
+}
+
+
+.table-container {
+
+    overflow-x: auto;
+
+}
+
+
+table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+}
+
+
+th {
+
+    background: #f7f9fb;
+
+    color: #778396;
+
+    font-size: 9px;
+
+    font-weight: 700;
+
+    text-align: left;
+
+    padding: 11px;
+
+    border-bottom:
+        1px solid #e1e6ec;
+
+}
+
+
+td {
+
+    padding: 12px 11px;
+
+    color: #4b5668;
+
+    font-size: 10px;
+
+    border-bottom:
+        1px solid #edf0f3;
+
+}
+
+
+.table-status {
+
+    color: #168356;
+
+    font-weight: 700;
+
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+footer {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 15px;
+
+    padding: 15px;
+
+    color: #98a2b1;
+
+    font-size: 9px;
+
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media(max-width:1100px) {
+
+    .sidebar {
+
+        width: 200px;
+
+    }
+
+    .main-content {
+
+        margin-left: 200px;
+
+    }
+
+    .kpi-grid {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+    }
+
+    .top-grid,
+    .analytics-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+}
+
+
+@media(max-width:700px) {
+
+    .sidebar {
+
+        position: relative;
+
+        width: 100%;
+
+        height: auto;
+
+    }
+
+    .sidebar nav {
+
+        display: none;
+
+    }
+
+    .sidebar-bottom {
+
+        display: none;
+
+    }
+
+    .main-content {
+
+        margin-left: 0;
+
+        padding: 20px;
+
+    }
+
+    .kpi-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+    .prediction-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+
+    }
+
+    .junction-area {
+
+        width: 100%;
+
+    }
+
+    footer {
+
+        flex-direction: column;
+
+        align-items: center;
+
+    }
+
+}
+
+/* =====================================================
+   TRAFFICINTELLI - LARGER UI TEXT
+===================================================== */
+
+/* Sidebar */
+.logo h2 {
+    font-size: 20px;
+}
+
+.logo span {
+    font-size: 12px;
+}
+
+.nav-item {
+    font-size: 15px;
+}
+
+.nav-item span {
+    font-size: 18px;
+}
+
+.connection-box strong {
+    font-size: 13px;
+}
+
+.connection-box small {
+    font-size: 11px;
+}
+
+.version {
+    font-size: 11px;
+}
+
+
+/* Header */
+.eyebrow {
+    font-size: 12px;
+}
+
+.page-header h1 {
+    font-size: 32px;
+}
+
+.page-header p {
+    font-size: 14px;
+}
+
+.date-box span {
+    font-size: 13px;
+}
+
+.date-box strong {
+    font-size: 18px;
+}
+
+
+/* KPI Cards */
+.kpi-label {
+    font-size: 11px;
+}
+
+.kpi-card strong {
+    font-size: 26px;
+}
+
+.kpi-card small {
+    font-size: 11px;
+}
+
+.kpi-card .adaptive {
+    font-size: 19px;
+}
+
+
+/* Panel headings */
+.panel-header h2 {
+    font-size: 18px;
+}
+
+.panel-header p {
+    font-size: 12px;
+}
+
+
+/* Live indicator */
+.live-indicator {
+    font-size: 11px;
+}
+
+
+/* Junction */
+.lane-name {
+    font-size: 13px;
+}
+
+.junction-center span {
+    font-size: 11px;
+}
+
+.junction-legend {
+    font-size: 12px;
+}
+
+
+/* Lane status */
+.lane-name-status {
+    font-size: 14px;
+}
+
+.vehicle-count {
+    font-size: 19px;
+}
+
+.vehicle-label {
+    font-size: 11px;
+}
+
+.density {
+    font-size: 11px;
+}
+
+.time {
+    font-size: 14px;
+}
+
+
+/* AI / Prediction */
+.ai-tag {
+    font-size: 10px;
+}
+
+.prediction-status {
+    font-size: 10px;
+}
+
+.prediction-item span {
+    font-size: 10px;
+}
+
+.prediction-item strong {
+    font-size: 25px;
+}
+
+.prediction-item small {
+    font-size: 11px;
+}
+
+
+/* Analytics */
+.bar-value {
+    font-size: 12px;
+}
+
+.bar-label {
+    font-size: 12px;
+}
+
+
+/* Cycle details */
+.cycle-details span {
+    font-size: 11px;
+}
+
+.cycle-details strong {
+    font-size: 14px;
+}
+
+
+/* Emergency */
+.emergency-card h3 {
+    font-size: 15px;
+}
+
+.emergency-card p {
+    font-size: 11px;
+}
+
+.emergency-state {
+    font-size: 10px;
+}
+
+
+/* Table */
+th {
+    font-size: 11px;
+}
+
+td {
+    font-size: 12px;
+}
+
+.view-button {
+    font-size: 11px;
+}
+
+
+/* Footer */
+footer {
+    font-size: 11px;
+}
+
+/* =====================================================
+   TRAFFICINTELLI DARK SLATE THEME
+===================================================== */
+
+
+/* Main background */
+
+body {
+    background: #111827;
+    color: #e5e7eb;
+}
+
+
+/* Sidebar */
+
+.sidebar {
+    background: #0b1220;
+    color: #e5e7eb;
+}
+
+
+/* Logo */
+
+.logo {
+    border-bottom-color: #202b3c;
+}
+
+.logo h2 {
+    color: #f1f5f9;
+}
+
+.logo span {
+    color: #7f8da3;
+}
+
+
+/* Sidebar navigation */
+
+.nav-item {
+    color: #8f9caf;
+}
+
+.nav-item.active {
+    background: #2563eb;
+    color: white;
+}
+
+.nav-item:hover {
+    background: #1b2a40;
+    color: white;
+}
+
+
+/* Main header */
+
+.page-header h1 {
+    color: #f1f5f9;
+}
+
+.page-header p {
+    color: #9aa6b7;
+}
+
+.date-box span {
+    color: #8995a7;
+}
+
+.date-box strong {
+    color: #e5e7eb;
+}
+
+
+/* =====================================================
+   CARDS / PANELS
+===================================================== */
+
+.kpi-card,
+.panel,
+.emergency-card {
+    background: #1b2535;
+
+    border-color: #2a374a;
+
+    box-shadow:
+        0 3px 12px rgba(0, 0, 0, 0.20);
+}
+
+
+/* Panel headings */
+
+.panel-header h2 {
+    color: #e8edf4;
+}
+
+.panel-header p {
+    color: #8e9bad;
+}
+
+
+/* KPI */
+
+.kpi-card strong {
+    color: #e8edf4;
+}
+
+.kpi-card small {
+    color: #8e9bad;
+}
+
+.kpi-label {
+    color: #8996a8;
+}
+
+
+/* =====================================================
+   KPI ICONS
+===================================================== */
+
+.kpi-icon.blue {
+    background: #172f55;
+    color: #60a5fa;
+}
+
+.kpi-icon.teal {
+    background: #123c40;
+    color: #4dd4d8;
+}
+
+.kpi-icon.orange {
+    background: #44351b;
+    color: #f5b94c;
+}
+
+.kpi-icon.purple {
+    background: #30234d;
+    color: #b794f4;
+}
+
+
+/* =====================================================
+   JUNCTION
+===================================================== */
+
+.junction-area {
+    background: #202b3a;
+    border-color: #344154;
+}
+
+
+/* Roads */
+
+.road {
+    background: #303b4a;
+}
+
+
+/* Center */
+
+.junction-center {
+    background: #111827;
+
+    border-color: #536174;
+}
+
+.junction-center span {
+    color: #cbd5e1;
+}
+
+
+/* Lane labels */
+
+.lane-name {
+    background: #111827;
+    color: #60a5fa;
+}
+
+
+/* =====================================================
+   LANE STATUS
+===================================================== */
+
+.lane-row {
+    background: #182231;
+
+    border-color: #293649;
+}
+
+.lane-row.active {
+    background: #1c3150;
+
+    border-color: #3b82f6;
+}
+
+.vehicle-count {
+    color: #e5e7eb;
+}
+
+.vehicle-label {
+    color: #8793a5;
+}
+
+.time {
+    color: #60a5fa;
+}
+
+
+/* Density */
+
+.density.low {
+    color: #4ade80;
+    background: #143a2a;
+}
+
+.density.medium {
+    color: #facc15;
+    background: #403716;
+}
+
+.density.high {
+    color: #f87171;
+    background: #421d22;
+}
+
+
+/* =====================================================
+   PREDICTIVE ANALYSIS
+===================================================== */
+
+.prediction-panel {
+    border-left-color: #3b82f6;
+}
+
+.ai-tag {
+    background: #17345d;
+    color: #60a5fa;
+}
+
+.prediction-status {
+    background: #17345d;
+    color: #60a5fa;
+}
+
+.prediction-grid {
+    border-top-color: #2a374a;
+}
+
+.prediction-item {
+    border-right-color: #2a374a;
+}
+
+.prediction-item span {
+    color: #8995a7;
+}
+
+.prediction-item strong {
+    color: #60a5fa;
+}
+
+.prediction-item small {
+    color: #8995a7;
+}
+
+
+/* =====================================================
+   CHART
+===================================================== */
+
+.traffic-chart {
+    border-bottom-color: #344154;
+}
+
+.bar {
+    background: #3b82f6;
+}
+
+.bar-value {
+    color: #cbd5e1;
+}
+
+.bar-label {
+    color: #8f9bad;
+}
+
+
+/* =====================================================
+   CYCLE DETAILS
+===================================================== */
+
+.cycle-details {
+    background: #2a374a;
+
+    border-color: #2a374a;
+}
+
+.cycle-details div {
+    background: #182231;
+}
+
+.cycle-details span {
+    color: #8995a7;
+}
+
+.cycle-details strong {
+    color: #dbe3ed;
+}
+
+
+/* =====================================================
+   EMERGENCY
+===================================================== */
+
+.emergency-card {
+    background: #1b2535;
+}
+
+.emergency-card h3 {
+    color: #e5e7eb;
+}
+
+.emergency-card p {
+    color: #8995a7;
+}
+
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+th {
+    background: #151e2c;
+
+    color: #9aa6b7;
+
+    border-bottom-color: #2a374a;
+}
+
+td {
+    color: #c3ccd8;
+
+    border-bottom-color: #273345;
+}
+
+tr:hover td {
+    background: #202c3d;
+}
+
+.view-button {
+    background: #1b2535;
+
+    border-color: #344154;
+
+    color: #8fb8e8;
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+footer {
+    color: #69778b;
+}
+
+
+/* =====================================================
+   CONNECTION
+===================================================== */
+
+.connection-box {
+    background: #151e2c;
+}
+
+.connection-box strong {
+    color: #dbe3ed;
+}
+
+.connection-box small {
+    color: #78869a;
+}
+
+
+/* =====================================================
+   LIVE INDICATOR
+===================================================== */
+
+.live-indicator {
+    color: #4ade80;
+}
+
+
+/* =====================================================
+   JUNCTION LEGEND
+===================================================== */
+
+.junction-legend {
+    color: #8995a7;
+}
+
+
+/* =====================================================
+   TABLE STATUS
+===================================================== */
+
+.table-status {
+    color: #4ade80;
+}
