@@ -1,54 +1,88 @@
 /* =====================================================
    TRAFFICINTELLI DASHBOARD
+   LIVE ESP8266 + DEMO MODE
 ===================================================== */
 
 
 /* =====================================================
-   MOCK DATA
+   CONFIGURATION
+===================================================== */
+
+/*
+   DEMO MODE
+   ----------
+   true  = use simulated values
+   false = read values from ESP8266
+*/
+
+const DEMO_MODE = true;
+
+
+/*
+   When hardware is connected, change this to
+   the IP address printed by the ESP8266.
+
+   Example:
+
+   const ESP_URL = "http://172.24.18.63";
+*/
+
+const ESP_URL = "http://192.168.4.76";
+
+
+/*
+   How often dashboard asks ESP for data.
+   1000 = every 1 second
+*/
+
+const LIVE_UPDATE_INTERVAL = 1000;
+
+
+
+/* =====================================================
+   TRAFFIC DATA
 ===================================================== */
 
 let trafficData = {
 
-    cycleNumber: 24,
-
-    cycleDuration: 150,
+    mode: "NORMAL",
 
     lanes: [
 
         {
             id: "L1",
-            vehicles: 12,
+            vehicles: 8,
             density: "LOW",
             greenTime: 30,
-            remainingTime: 18,
-            cleared: 10
+            remainingTime: 30,
+            cleared: 0
         },
 
         {
             id: "L2",
-            vehicles: 26,
-            density: "HIGH",
-            greenTime: 50,
-            remainingTime: 42,
-            cleared: 19
+            vehicles: 16,
+            density: "MEDIUM",
+            greenTime: 40,
+            remainingTime: 40,
+            cleared: 0
         },
 
         {
             id: "L3",
-            vehicles: 8,
+            vehicles: 7,
             density: "LOW",
             greenTime: 30,
-            remainingTime: 72,
-            cleared: 7
+            remainingTime: 30,
+            cleared: 0
         },
 
         {
             id: "L4",
-            vehicles: 22,
-            density: "MEDIUM",
-            greenTime: 40,
-            remainingTime: 112,
-            cleared: 18
+            vehicles: 24,
+            density: "HIGH",
+            greenTime: 50,
+            remainingTime: 50,
+            cleared: 0
         }
 
     ],
@@ -64,11 +98,25 @@ let trafficData = {
 };
 
 
-/* =====================================================
-   CURRENT ACTIVE LANE
-===================================================== */
+/*
+   Current active lane.
+
+   1 = L1
+   2 = L2
+   3 = L3
+   4 = L4
+*/
 
 let activeLane = 1;
+
+
+
+/* =====================================================
+   CYCLE
+===================================================== */
+
+let cycleNumber = 1;
+
 
 
 /* =====================================================
@@ -79,8 +127,11 @@ function calculateTotalVehicles() {
 
     return trafficData.lanes.reduce(
 
-        (total, lane) =>
-            total + lane.vehicles,
+        (total, lane) => {
+
+            return total + lane.vehicles;
+
+        },
 
         0
 
@@ -89,22 +140,52 @@ function calculateTotalVehicles() {
 }
 
 
+
 /* =====================================================
-   SUMMARY
+   DENSITY CALCULATION
+===================================================== */
+
+/*
+   These thresholds currently match the logic used
+   by the Arduino:
+
+   <= 5       LOW
+   6 - 15     MEDIUM
+   > 15       HIGH
+
+   If your final Arduino uses different thresholds,
+   we can change these later.
+*/
+
+function calculateDensity(vehicleCount) {
+
+    if (vehicleCount <= 5) {
+
+        return "LOW";
+
+    }
+
+    if (vehicleCount <= 15) {
+
+        return "MEDIUM";
+
+    }
+
+    return "HIGH";
+
+}
+
+
+
+/* =====================================================
+   UPDATE SUMMARY CARDS
 ===================================================== */
 
 function updateSummary() {
 
     document.getElementById(
         "cycleNumber"
-    ).textContent =
-        trafficData.cycleNumber;
-
-
-    document.getElementById(
-        "cycleDuration"
-    ).textContent =
-        trafficData.cycleDuration;
+    ).textContent = cycleNumber;
 
 
     document.getElementById(
@@ -112,11 +193,36 @@ function updateSummary() {
     ).textContent =
         calculateTotalVehicles();
 
+
+    /*
+       Calculate actual cycle duration
+       from the lane green times.
+    */
+
+    const duration =
+        trafficData.lanes.reduce(
+
+            (total, lane) => {
+
+                return total + lane.greenTime;
+
+            },
+
+            0
+
+        );
+
+
+    document.getElementById(
+        "cycleDuration"
+    ).textContent = duration;
+
 }
 
 
+
 /* =====================================================
-   LANE STATUS
+   UPDATE LANE CARDS
 ===================================================== */
 
 function updateLaneStatus() {
@@ -131,6 +237,7 @@ function updateLaneStatus() {
 
 
     trafficData.lanes.forEach(
+
         (lane, index) => {
 
 
@@ -143,6 +250,10 @@ function updateLaneStatus() {
             row.className =
                 "lane-row";
 
+
+            /*
+               Highlight active lane
+            */
 
             if (
                 index + 1 === activeLane
@@ -157,52 +268,62 @@ function updateLaneStatus() {
 
             row.innerHTML = `
 
-            <div class="lane-name-status">
-                ${lane.id}
-            </div>
-
-            <div>
-
-                <div class="vehicle-count">
-                    ${lane.vehicles}
+                <div class="lane-name-status">
+                    ${lane.id}
                 </div>
 
-                <div class="vehicle-label">
-                    vehicles
+                <div>
+
+                    <div class="vehicle-count">
+                        ${lane.vehicles}
+                    </div>
+
+                    <div class="vehicle-label">
+                        vehicles
+                    </div>
+
                 </div>
 
-            </div>
+                <div class="density ${lane.density.toLowerCase()}">
+                    ${lane.density}
+                </div>
 
-            <div class="density
-                ${lane.density.toLowerCase()}">
+                <div class="time">
+                    ${lane.remainingTime}s
+                </div>
 
-                ${lane.density}
-
-            </div>
-
-            <div class="time">
-
-                ${lane.remainingTime}s
-
-            </div>
-
-        `;
+            `;
 
 
             container.appendChild(row);
 
-        });
+        }
+
+    );
 
 }
 
 
+
 /* =====================================================
-   SIGNAL CONTROL
-   IMPORTANT:
-   ONLY ONE LIGHT CAN BE ACTIVE
+   UPDATE TRAFFIC SIGNALS
 ===================================================== */
 
 function updateSignals() {
+
+
+    /*
+       IMPORTANT:
+
+       First turn ALL lights OFF.
+
+       Then:
+
+       Active lane → GREEN
+       Other lanes → RED
+
+       This prevents RED + GREEN conflicts.
+    */
 
 
     for (
@@ -216,6 +337,13 @@ function updateSignals() {
             document.getElementById(
                 `signal${laneNumber}`
             );
+
+
+        if (!signal) {
+
+            continue;
+
+        }
 
 
         const red =
@@ -236,7 +364,9 @@ function updateSignals() {
             );
 
 
-        /* FIRST TURN EVERYTHING OFF */
+        /*
+           Clear everything
+        */
 
         red.classList.remove(
             "active"
@@ -251,7 +381,9 @@ function updateSignals() {
         );
 
 
-        /* THEN ACTIVATE ONLY ONE */
+        /*
+           Set signal
+        */
 
         if (
             laneNumber === activeLane
@@ -262,6 +394,7 @@ function updateSignals() {
             );
 
         }
+
         else {
 
             red.classList.add(
@@ -273,6 +406,7 @@ function updateSignals() {
     }
 
 }
+
 
 
 /* =====================================================
@@ -287,18 +421,30 @@ function updateTrafficChart() {
         );
 
 
+    if (!chart) {
+
+        return;
+
+    }
+
+
     chart.innerHTML = "";
 
 
     const maxVehicles =
         Math.max(
+
             ...trafficData.lanes.map(
                 lane => lane.vehicles
-            )
+            ),
+
+            1
+
         );
 
 
     trafficData.lanes.forEach(
+
         lane => {
 
 
@@ -314,43 +460,49 @@ function updateTrafficChart() {
 
             const height =
                 Math.max(
+
                     20,
+
                     (
                         lane.vehicles /
                         maxVehicles
                     ) * 160
+
                 );
 
 
             container.innerHTML = `
 
-            <span class="bar-value">
-                ${lane.vehicles}
-            </span>
+                <span class="bar-value">
+                    ${lane.vehicles}
+                </span>
 
-            <div
-                class="bar"
-                style="height:${height}px">
-            </div>
+                <div
+                    class="bar"
+                    style="height:${height}px">
+                </div>
 
-            <span class="bar-label">
-                ${lane.id}
-            </span>
+                <span class="bar-label">
+                    ${lane.id}
+                </span>
 
-        `;
+            `;
 
 
             chart.appendChild(
                 container
             );
 
-        });
+        }
+
+    );
 
 }
 
 
+
 /* =====================================================
-   PREDICTION
+   PREDICTIVE SECTION
 ===================================================== */
 
 function updatePrediction() {
@@ -361,6 +513,7 @@ function updatePrediction() {
 
 
     trafficData.lanes.forEach(
+
         lane => {
 
             if (
@@ -373,6 +526,7 @@ function updatePrediction() {
             }
 
         }
+
     );
 
 
@@ -383,10 +537,10 @@ function updatePrediction() {
 
 
     /*
-        MOCK PREDICTION
+       Temporary prediction.
 
-        Later this will come
-        from the ML model.
+       Later this will come from
+       your FastAPI ML endpoint.
     */
 
     document.getElementById(
@@ -424,12 +578,19 @@ function updatePrediction() {
         recommendedTime;
 
 
+    /*
+       Temporary confidence.
+
+       Later this will come from
+       your ML model.
+    */
+
     document.getElementById(
         "confidence"
-    ).textContent =
-        87;
+    ).textContent = 87;
 
 }
+
 
 
 /* =====================================================
@@ -446,8 +607,11 @@ function updateCycleDetails() {
     const cleared =
         trafficData.lanes.reduce(
 
-            (sum, lane) =>
-                sum + lane.cleared,
+            (sum, lane) => {
+
+                return sum + lane.cleared;
+
+            },
 
             0
 
@@ -456,8 +620,11 @@ function updateCycleDetails() {
 
     const remaining =
         Math.max(
+
             0,
+
             total - cleared
+
         );
 
 
@@ -473,17 +640,26 @@ function updateCycleDetails() {
         remaining;
 
 
+    /*
+       Find lanes with additional
+       green time.
+    */
+
     const extendedLanes =
         trafficData.lanes
 
             .filter(
+
                 lane =>
                     lane.greenTime > 30
+
             )
 
             .map(
+
                 lane =>
                     lane.id
+
             );
 
 
@@ -498,16 +674,22 @@ function updateCycleDetails() {
             : "None";
 
 
+    /*
+       Total additional green time
+    */
+
     const extension =
         trafficData.lanes.reduce(
 
-            (sum, lane) =>
+            (sum, lane) => {
 
-                sum +
-                Math.max(
-                    0,
-                    lane.greenTime - 30
-                ),
+                return sum +
+                    Math.max(
+                        0,
+                        lane.greenTime - 30
+                    );
+
+            },
 
             0
 
@@ -527,8 +709,9 @@ function updateCycleDetails() {
 }
 
 
+
 /* =====================================================
-   EMERGENCY
+   EMERGENCY STATUS
 ===================================================== */
 
 function updateEmergency() {
@@ -552,6 +735,7 @@ function updateEmergency() {
 
 
         status.textContent =
+
             `Emergency vehicle detected on ${trafficData.emergency.lane}`;
 
 
@@ -591,166 +775,397 @@ function updateEmergency() {
 }
 
 
+
 /* =====================================================
-   RECENT CYCLES
+   UPDATE MODE
 ===================================================== */
 
-function updateRecentCycles() {
+function updateMode() {
 
-
-    const table =
-        document.getElementById(
-            "cycleTable"
+    const modeElement =
+        document.querySelector(
+            ".adaptive"
         );
 
 
-    const cycles = [
+    if (!modeElement) {
 
-        {
-            cycle: 24,
-            duration: 150,
-            vehicles: 68,
-            lanes: "L2, L4",
-            emergency: "No"
-        },
+        return;
 
-        {
-            cycle: 23,
-            duration: 130,
-            vehicles: 51,
-            lanes: "L2",
-            emergency: "No"
-        },
-
-        {
-            cycle: 22,
-            duration: 120,
-            vehicles: 32,
-            lanes: "None",
-            emergency: "No"
-        },
-
-        {
-            cycle: 21,
-            duration: 150,
-            vehicles: 68,
-            lanes: "L1, L4",
-            emergency: "Yes"
-        },
-
-        {
-            cycle: 20,
-            duration: 140,
-            vehicles: 56,
-            lanes: "L3",
-            emergency: "No"
-        }
-
-    ];
+    }
 
 
-    table.innerHTML = "";
+    if (
+        trafficData.mode ===
+        "DENSITY"
+    ) {
+
+        modeElement.textContent =
+            "ADAPTIVE";
+
+    }
+
+    else {
+
+        modeElement.textContent =
+            "NORMAL";
+
+    }
+
+}
 
 
-    cycles.forEach(
-        cycle => {
+
+/* =====================================================
+   UPDATE EVERYTHING
+===================================================== */
+
+function updateDashboard() {
+
+    updateSummary();
+
+    updateLaneStatus();
+
+    updateSignals();
+
+    updateTrafficChart();
+
+    updatePrediction();
+
+    updateCycleDetails();
+
+    updateEmergency();
+
+    updateMode();
+
+}
 
 
-            const row =
-                document.createElement(
-                    "tr"
-                );
+
+/* =====================================================
+   ESP8266 LIVE DATA
+===================================================== */
+
+async function getLiveData() {
 
 
-            row.innerHTML = `
-
-            <td>
-                #${cycle.cycle}
-            </td>
-
-            <td>
-                ${cycle.duration}s
-            </td>
-
-            <td>
-                ${cycle.vehicles}
-            </td>
-
-            <td>
-                ${cycle.lanes}
-            </td>
-
-            <td>
-                ${cycle.emergency}
-            </td>
-
-            <td class="table-status">
-                COMPLETED
-            </td>
-
-        `;
+    try {
 
 
-            table.appendChild(
-                row
+        const response =
+            await fetch(
+
+                ESP_URL +
+                "/data",
+
+                {
+                    method: "GET",
+
+                    cache: "no-store"
+
+                }
+
             );
 
-        });
+
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+
+        }
+
+
+        const text =
+            await response.text();
+
+
+        console.log(
+            "ESP DATA:",
+            text
+        );
+
+
+        /*
+           Expected:
+
+           L1,L2,L3,L4,MODE,
+           EMERGENCY,ACTIVE,
+           T1,T2,T3,T4
+        */
+
+
+        const data =
+            text
+                .trim()
+                .split(",");
+
+
+        if (
+            data.length < 11
+        ) {
+
+            console.warn(
+                "Invalid ESP packet:",
+                text
+            );
+
+            return;
+
+        }
+
+
+        /*
+           -----------------------------------
+           VEHICLE COUNTS
+           -----------------------------------
+        */
+
+        trafficData.lanes[0].vehicles =
+            parseInt(data[0]) || 0;
+
+
+        trafficData.lanes[1].vehicles =
+            parseInt(data[1]) || 0;
+
+
+        trafficData.lanes[2].vehicles =
+            parseInt(data[2]) || 0;
+
+
+        trafficData.lanes[3].vehicles =
+            parseInt(data[3]) || 0;
+
+
+
+        /*
+           -----------------------------------
+           MODE
+           -----------------------------------
+        */
+
+        trafficData.mode =
+            data[4].trim();
+
+
+
+        /*
+           -----------------------------------
+           EMERGENCY
+           -----------------------------------
+        */
+
+        const emergencyValue =
+            data[5]
+                .trim()
+                .toLowerCase();
+
+
+        trafficData.emergency.detected =
+
+            emergencyValue === "1" ||
+            emergencyValue === "true";
+
+
+
+        /*
+           -----------------------------------
+           ACTIVE LANE
+           -----------------------------------
+        */
+
+        const receivedActiveLane =
+            parseInt(data[6]);
+
+
+        if (
+            receivedActiveLane >= 1 &&
+            receivedActiveLane <= 4
+        ) {
+
+            activeLane =
+                receivedActiveLane;
+
+        }
+
+
+
+        /*
+           -----------------------------------
+           TIMERS
+           -----------------------------------
+        */
+
+        trafficData.lanes[0].remainingTime =
+            parseInt(data[7]) || 0;
+
+
+        trafficData.lanes[1].remainingTime =
+            parseInt(data[8]) || 0;
+
+
+        trafficData.lanes[2].remainingTime =
+            parseInt(data[9]) || 0;
+
+
+        trafficData.lanes[3].remainingTime =
+            parseInt(data[10]) || 0;
+
+
+
+        /*
+           -----------------------------------
+           DENSITY
+           -----------------------------------
+
+           For now we calculate density
+           from vehicle count.
+
+           Later Arduino can send the
+           exact density values too.
+        */
+
+        trafficData.lanes.forEach(
+
+            lane => {
+
+                lane.density =
+                    calculateDensity(
+                        lane.vehicles
+                    );
+
+            }
+
+        );
+
+
+        /*
+           -----------------------------------
+           UPDATE UI
+           -----------------------------------
+        */
+
+        updateDashboard();
+
+
+        /*
+           Connection indicator
+        */
+
+        setConnectionStatus(
+            true
+        );
+
+
+    }
+
+    catch (error) {
+
+
+        console.error(
+            "ESP connection failed:",
+            error
+        );
+
+
+        setConnectionStatus(
+            false
+        );
+
+    }
 
 }
 
 
+
 /* =====================================================
-   CLOCK
+   CONNECTION STATUS
 ===================================================== */
 
-function updateClock() {
+function setConnectionStatus(
+    connected
+) {
 
 
-    const now =
-        new Date();
-
-
-    document.getElementById(
-        "currentTime"
-    ).textContent =
-
-        now.toLocaleTimeString(
-            "en-IN",
-            {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit"
-            }
+    const statusText =
+        document.querySelector(
+            ".connection-box strong"
         );
 
 
-    document.getElementById(
-        "currentDate"
-    ).textContent =
-
-        now.toLocaleDateString(
-            "en-IN",
-            {
-                day: "2-digit",
-                month: "short",
-                year: "numeric"
-            }
+    const statusSmall =
+        document.querySelector(
+            ".connection-box small"
         );
+
+
+    const dot =
+        document.querySelector(
+            ".connection-dot"
+        );
+
+
+    if (
+        !statusText ||
+        !statusSmall ||
+        !dot
+    ) {
+
+        return;
+
+    }
+
+
+    if (connected) {
+
+        statusText.textContent =
+            "System Online";
+
+        statusSmall.textContent =
+            "ESP8266 Connected";
+
+        dot.style.background =
+            "#20b26b";
+
+    }
+
+    else {
+
+        statusText.textContent =
+            "System Offline";
+
+        statusSmall.textContent =
+            "ESP8266 Not Connected";
+
+        dot.style.background =
+            "#e23b45";
+
+    }
 
 }
 
 
+
 /* =====================================================
-   SIMULATE SIGNAL CYCLE
+   DEMO MODE
 ===================================================== */
 
 function simulateTraffic() {
 
 
     /*
-        Find current active lane
+       DO NOT use this when real hardware
+       is connected.
     */
+
+
+    if (!DEMO_MODE) {
+
+        return;
+
+    }
+
 
     const current =
         trafficData.lanes[
@@ -761,16 +1176,16 @@ function simulateTraffic() {
     current.remainingTime--;
 
 
-    /*
-        When current lane finishes,
-        move anti-clockwise:
-
-        L1 → L2 → L3 → L4 → L1
-    */
-
     if (
         current.remainingTime <= 0
     ) {
+
+
+        /*
+           Anti-clockwise:
+
+           L1 → L2 → L3 → L4 → L1
+        */
 
         activeLane++;
 
@@ -793,40 +1208,205 @@ function simulateTraffic() {
         next.remainingTime =
             next.greenTime;
 
+
+        cycleNumber++;
+
     }
 
 
-    updateLaneStatus();
-
-    updateSignals();
+    updateDashboard();
 
 }
 
 
+
 /* =====================================================
-   INITIALIZE
+   CLOCK
+===================================================== */
+
+function updateClock() {
+
+
+    const now =
+        new Date();
+
+
+    const timeElement =
+        document.getElementById(
+            "currentTime"
+        );
+
+
+    const dateElement =
+        document.getElementById(
+            "currentDate"
+        );
+
+
+    if (timeElement) {
+
+        timeElement.textContent =
+
+            now.toLocaleTimeString(
+                "en-IN",
+                {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit"
+                }
+            );
+
+    }
+
+
+    if (dateElement) {
+
+        dateElement.textContent =
+
+            now.toLocaleDateString(
+                "en-IN",
+                {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric"
+                }
+            );
+
+    }
+
+}
+
+
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+const sidebarItems =
+    document.querySelectorAll(
+        ".nav-item"
+    );
+
+
+sidebarItems.forEach(
+
+    item => {
+
+
+        item.addEventListener(
+
+            "click",
+
+            function (event) {
+
+                event.preventDefault();
+
+
+                sidebarItems.forEach(
+
+                    navItem => {
+
+                        navItem.classList.remove(
+                            "active"
+                        );
+
+                    }
+
+                );
+
+
+                this.classList.add(
+                    "active"
+                );
+
+
+                console.log(
+                    "Selected:",
+                    this.dataset.section
+                );
+
+            }
+
+        );
+
+    }
+
+);
+
+
+
+/* =====================================================
+   INITIALIZATION
 ===================================================== */
 
 function initializeDashboard() {
 
 
-    updateSummary();
+    /*
+       Initial UI
+    */
 
-    updateLaneStatus();
+    updateDashboard();
 
-    updateSignals();
 
-    updateTrafficChart();
-
-    updatePrediction();
-
-    updateCycleDetails();
-
-    updateEmergency();
-
-    updateRecentCycles();
+    /*
+       Clock
+    */
 
     updateClock();
+
+
+    /*
+       If using REAL HARDWARE,
+       start ESP polling.
+    */
+
+    if (!DEMO_MODE) {
+
+        console.log(
+            "TRAFFICINTELLI LIVE MODE"
+        );
+
+        console.log(
+            "ESP URL:",
+            ESP_URL
+        );
+
+
+        getLiveData();
+
+
+        setInterval(
+
+            getLiveData,
+
+            LIVE_UPDATE_INTERVAL
+
+        );
+
+    }
+
+
+    /*
+       Demo mode
+    */
+
+    else {
+
+        console.log(
+            "TRAFFICINTELLI DEMO MODE"
+        );
+
+
+        setInterval(
+
+            simulateTraffic,
+
+            1000
+
+        );
+
+    }
 
 }
 
@@ -834,161 +1414,14 @@ function initializeDashboard() {
 initializeDashboard();
 
 
-/* =====================================================
-   UPDATE CLOCK
-===================================================== */
+/*
+   Clock runs regardless of mode
+*/
 
 setInterval(
+
     updateClock,
+
     1000
+
 );
-
-
-/* =====================================================
-   SIMULATE SIGNALS
-===================================================== */
-
-setInterval(
-    simulateTraffic,
-    1000
-);
-
-/* =====================================================
-   SIDEBAR NAVIGATION
-===================================================== */
-
-const sidebarItems =
-    document.querySelectorAll(".nav-item");
-
-
-sidebarItems.forEach(item => {
-
-    item.addEventListener("click", function (event) {
-
-        event.preventDefault();
-
-
-        // Remove active state
-        sidebarItems.forEach(navItem => {
-
-            navItem.classList.remove("active");
-
-        });
-
-
-        // Activate clicked item
-        this.classList.add("active");
-
-
-        const section =
-            this.dataset.section;
-
-
-        console.log(
-            "Selected section:",
-            section
-        );
-
-
-        handleSection(section);
-
-    });
-
-});
-
-
-/* =====================================================
-   SECTION HANDLER
-===================================================== */
-
-function handleSection(section) {
-
-    switch (section) {
-
-
-        case "dashboard":
-
-            showDashboard();
-
-            break;
-
-
-        case "live":
-
-            showLiveTraffic();
-
-            break;
-
-
-        case "analytics":
-
-            showAnalytics();
-
-            break;
-
-
-        case "predictions":
-
-            showPredictions();
-
-            break;
-
-
-        case "history":
-
-            showHistory();
-
-            break;
-
-    }
-
-}
-
-
-/* =====================================================
-   SECTION FUNCTIONS
-===================================================== */
-
-function showDashboard() {
-
-    console.log(
-        "Dashboard selected"
-    );
-
-}
-
-
-function showLiveTraffic() {
-
-    alert(
-        "Live Traffic module will be connected to the ESP8266 data stream."
-    );
-
-}
-
-
-function showAnalytics() {
-
-    alert(
-        "Analytics module will use TrafficIntelli PostgreSQL data."
-    );
-
-}
-
-
-function showPredictions() {
-
-    alert(
-        "Predictive Analysis module will be connected to the ML model."
-    );
-
-}
-
-
-function showHistory() {
-
-    alert(
-        "Cycle History will display previous traffic cycles from PostgreSQL."
-    );
-
-}
