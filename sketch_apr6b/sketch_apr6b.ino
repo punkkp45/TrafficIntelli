@@ -1,8 +1,8 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 
-const char* ssid = "Kaushal_19";
-const char* password = "123456789";
+const char* ssid = "PUNK GT 6";
+const char* password = "punkgt.exe";
 
 ESP8266WebServer server(80);
 String displayData = "";
@@ -236,20 +236,58 @@ setInterval(update,1000);
 void setup(){
 
   Serial.begin(9600);
+  delay(1000);
 
-  WiFi.begin(ssid,password);
+  Serial.println();
+  Serial.println("================================");
+  Serial.println("   TRAFFICINTELLI ESP8266");
+  Serial.println("================================");
 
-  while(WiFi.status()!=WL_CONNECTED){
+  Serial.print("Connecting to WiFi: ");
+  Serial.println(ssid);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+
+  int attempts = 0;
+
+  while(WiFi.status() != WL_CONNECTED && attempts < 30){
+
     delay(500);
+
+    Serial.print(".");
+
+    attempts++;
   }
 
-  Serial.println(WiFi.localIP());
+  Serial.println();
 
-  server.on("/",handleRoot);
-  server.on("/data",handleData);
-  server.on("/cmd",handleCmd);
+  if(WiFi.status() == WL_CONNECTED){
+
+    Serial.println("WiFi Connected!");
+    Serial.print("IP Address: ");
+    Serial.println(WiFi.localIP());
+
+    Serial.print("Signal Strength: ");
+    Serial.print(WiFi.RSSI());
+    Serial.println(" dBm");
+
+  }
+  else{
+
+    Serial.println("ERROR: WiFi connection failed!");
+    Serial.println("Check SSID and password.");
+  }
+
+  // Start web server regardless
+  server.on("/", handleRoot);
+  server.on("/data", handleData);
+  server.on("/cmd", handleCmd);
 
   server.begin();
+
+  Serial.println("Web server started.");
+  Serial.println("================================");
 }
 
 void loop(){
