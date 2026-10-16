@@ -2,350 +2,396 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPClient.h>
 
-const char* ssid = "PUNK GT 6";
-const char* password = "punkgt.exe";
-const char* apiURL = "http://10.163.100.90:8000/traffic/cycle";
+// =====================================================
+// WIFI & BACKEND CONFIGURATION
+// =====================================================
+
+const char* ssid     = "Kaushal_19";
+const char* password = "123456789";
+
+// PC running FastAPI server.
+// Must be the PC's CURRENT IPv4 on the SAME network as the ESP (check with ipconfig).
+const char* apiHost = "10.158.197.90";
+const int   apiPort = 8001;
+const String apiURL = String("http://") + apiHost + ":" + apiPort + "/traffic/cycle";
 
 ESP8266WebServer server(80);
-String displayData = "";
 
-void handleRoot(){ server.send(200,"text/html",webpage()); }
-void handleData(){ server.send(200,"text/plain",displayData); }
+// =====================================================
+// SYSTEM STATE & TELEMETRY
+// =====================================================
 
-// 🔥 FIXED COMMAND SENDING
-void handleCmd(){
+String displayData     = "";
+String lastCycleData   = "";
+String lastApiResponse = "None";
+String lastResult      = "NONE";   // INSERTED / DUPLICATE / REJECTED / SERVER_ERROR / HTTP_ERROR / WIFI_DOWN
+int    lastHttpCode    = 0;
+unsigned long cyclesSent     = 0;  // any 2xx (kept for compatibility)
+unsigned long lastWifiCheck  = 0;
+
+// Per-stage diagnostic counters (exposed on /status)
+unsigned long serialLines      = 0;  // complete lines received from Mega
+unsigned long livePackets      = 0;
+unsigned long cyclePackets     = 0;  // lines starting with CYCLE|
+unsigned long cycleBadFields   = 0;  // CYCLE lines without 30 fields (still forwarded for server-side detail)
+int           lastCycleFields  = 0;
+unsigned long rxOverflows      = 0;  // oversize lines + UART overruns
+unsigned long httpAttempts     = 0;
+unsigned long cyclesInserted   = 0;
+unsigned long cyclesDuplicate  = 0;
+unsigned long cyclesRejected   = 0;  // HTTP 4xx (validation)
+unsigned long serverErrors     = 0;  // HTTP 5xx (e.g. database error)
+unsigned long transportErrors  = 0;  // negative codes: connection refused/timeout, WiFi down
+unsigned long retriesDropped   = 0;
+
+// One pending packet is retried after transport/5xx failures
+String pendingCycle = "";
+int    pendingAttempts = 0;
+unsigned long lastRetry = 0;
+#define RETRY_INTERVAL_MS 10000
+#define MAX_ATTEMPTS      5
+
+// Raw UART diagnostics: distinguishes "no bytes arrive at the ESP's RX pin"
+// from "bytes arrive but never form a complete line" (baud/framing problem).
+unsigned long bytesReceived = 0;
+String lastRaw = "";   // tail of the raw characters actually read from UART0
+
+// Serial reception buffer
+String rxBuffer = "";
+
+// UART0 RX (GPIO3) is shared with the USB-serial bridge on a NodeMCU. Enabling
+// this moves UART0 to GPIO13(RX)/GPIO15(TX) via Serial.swap(), so the Mega gets
+// a dedicated RX pin and the USB monitor stops contending with it.
+// Leave at 0 unless you rewire the Mega's TX1 to GPIO13 (D7).
+#define USE_SWAPPED_UART 0
+
+void noteRaw(char c) {
+  bytesReceived++;
+  // Keep a short printable tail for inspection via /status
+  if (c >= 32 && c <= 126) lastRaw += c;
+  else if (c == '\n')      lastRaw += "<LF>";
+  else if (c == '\r')      lastRaw += "<CR>";
+  else                     lastRaw += '.';   // non-printable: usually a baud mismatch
+  if (lastRaw.length() > 120) lastRaw.remove(0, lastRaw.length() - 120);
+}
+
+void handleRoot() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "text/plain", "TrafficIntelli ESP8266 IoT Node Online");
+}
+
+void handleData() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "text/plain", displayData);
+}
+
+void handleStatus() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  String json = "{";
+  json += "\"wifi\":\"" + String(WiFi.status() == WL_CONNECTED ? "CONNECTED" : "DISCONNECTED") + "\",";
+  json += "\"esp_ip\":\"" + WiFi.localIP().toString() + "\",";
+  json += "\"pc_ip\":\"" + String(apiHost) + "\",";
+  json += "\"api_url\":\"" + apiURL + "\",";
+  json += "\"rssi\":" + String(WiFi.RSSI()) + ",";
+  json += "\"uart_swapped\":" + String(USE_SWAPPED_UART ? "true" : "false") + ",";
+  json += "\"bytes_received\":" + String(bytesReceived) + ",";
+
+  String safeRaw = lastRaw;
+  safeRaw.replace("\\", "/");
+  safeRaw.replace("\"", "'");
+  json += "\"last_raw\":\"" + safeRaw + "\",";
+  json += "\"serial_lines\":" + String(serialLines) + ",";
+  json += "\"live_packets\":" + String(livePackets) + ",";
+  json += "\"cycle_packets\":" + String(cyclePackets) + ",";
+  json += "\"cycle_bad_fields\":" + String(cycleBadFields) + ",";
+  json += "\"last_cycle_fields\":" + String(lastCycleFields) + ",";
+  json += "\"rx_overflows\":" + String(rxOverflows) + ",";
+  json += "\"http_attempts\":" + String(httpAttempts) + ",";
+  json += "\"cycles_inserted\":" + String(cyclesInserted) + ",";
+  json += "\"cycles_duplicate\":" + String(cyclesDuplicate) + ",";
+  json += "\"cycles_rejected\":" + String(cyclesRejected) + ",";
+  json += "\"server_errors\":" + String(serverErrors) + ",";
+  json += "\"transport_errors\":" + String(transportErrors) + ",";
+  json += "\"retry_pending\":" + String(pendingCycle.length() > 0 ? "true" : "false") + ",";
+  json += "\"retries_dropped\":" + String(retriesDropped) + ",";
+  json += "\"last_result\":\"" + lastResult + "\",";
+  json += "\"last_cycle\":\"" + lastCycleData + "\",";
+  json += "\"http_code\":" + String(lastHttpCode) + ",";
+  json += "\"cycles_sent\":" + String(cyclesSent) + ",";
+
+  String safeResponse = lastApiResponse;
+  safeResponse.replace("\"", "'");
+  safeResponse.replace("\n", " ");
+  safeResponse.replace("\r", " ");
+  json += "\"api_response\":\"" + safeResponse + "\"";
+  json += "}";
+
+  server.send(200, "application/json", json);
+}
+
+void handleCmd() {
   String cmd = server.arg("c");
   cmd.trim();
 
-  Serial.println(cmd);   // 🔥 send to Arduino
+  if (cmd.length() > 0) {
+    // Forward command to Arduino Mega via hardware serial
+    Serial.println(cmd);
+  }
 
-  server.send(200,"text/plain","OK");
-}
-// ===== WEBPAGE =====
-String webpage(){
-return R"rawliteral(
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-body {
-  margin:0;
-  font-family:'Segoe UI';
-  background: linear-gradient(135deg,#0f0024,#1a0033,#240046);
-  color:white;
-  text-align:center;
+  server.send(200, "text/plain", "OK");
 }
 
-h1 { color:#c77dff; }
+// =====================================================
+// API DISPATCH (POST TO FASTAPI)
+// =====================================================
 
-/* CARD */
-.card {
-  width:90%;
-  margin:20px auto;
-  padding:20px;
-  border-radius:15px;
-  background:rgba(255,255,255,0.05);
-  box-shadow:0 0 25px rgba(168,85,247,0.3);
-}
+// Returns true if the packet should be retried (transport error or HTTP 5xx).
+bool sendCycleToAPI(const String& cycleData) {
+  if (cycleData.length() == 0) return false;
 
-/* TABLE */
-table { width:100%; border-collapse:collapse; }
-th { color:#c77dff; padding:10px; }
-td { padding:10px; }
+  lastCycleData = cycleData;
 
-.active {
-  background:rgba(168,85,247,0.3);
-  box-shadow:0 0 10px #a855f7;
-}
-
-.red { color:#ff4d6d; }
-.green { color:#00f5d4; }
-.timer { color:#ffd60a; font-weight:bold; }
-
-/* BUTTONS */
-button {
-  padding:10px 15px;
-  margin:5px;
-  border:none;
-  border-radius:8px;
-  background:#9d4edd;
-  color:white;
-}
-
-/* ===== JUNCTION ===== */
-.junction {
-  position:relative;
-  width:300px;
-  height:300px;
-  margin:30px auto;
-}
-
-.center {
-  position:absolute;
-  width:80px;
-  height:80px;
-  background:#222;
-  top:110px;
-  left:110px;
-  border-radius:10px;
-}
-
-.lane {
-  position:absolute;
-  background:rgba(255,255,255,0.05);
-  border-radius:8px;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-}
-
-.vertical { width:60px; height:120px; }
-.horizontal { width:120px; height:60px; }
-
-#laneV1 { top:0; left:120px; }
-#laneV2 { bottom:0; left:120px; }
-#laneH3 { left:0; top:120px; }
-#laneH4 { right:0; top:120px; }
-
-.bar {
-  width:80%;
-  height:0%;
-  background:linear-gradient(#ff0054,#ff5400);
-  border-radius:5px;
-  transition:0.5s;
-}
-
-.activeLane {
-  box-shadow:0 0 15px #00f5d4;
-}
-
-</style>
-</head>
-
-<body>
-
-<h1>Smart Traffic Dashboard</h1>
-
-<div class="card">
-<table>
-<tr><th>Lane</th><th>Vehicles</th><th>Status</th><th>Time</th></tr>
-<tr id="lane1"><td>1</td><td id="l1">0</td><td id="s1">-</td><td class="timer" id="t1">0</td></tr>
-<tr id="lane2"><td>2</td><td id="l2">0</td><td id="s2">-</td><td class="timer" id="t2">0</td></tr>
-<tr id="lane3"><td>3</td><td id="l3">0</td><td id="s3">-</td><td class="timer" id="t3">0</td></tr>
-<tr id="lane4"><td>4</td><td id="l4">0</td><td id="s4">-</td><td class="timer" id="t4">0</td></tr>
-</table>
-</div>
-
-
-
-<h3 id="mode"></h3>
-<h3 id="emg"></h3>
-
-<button onclick="send('L1')">L1</button>
-<button onclick="send('L2')">L2</button>
-<button onclick="send('L3')">L3</button>
-<button onclick="send('L4')">L4</button>
-
-<br>
-<button onclick="send('EMG')">Emergency</button>
-<button onclick="send('AUTO')">Auto</button>
-
-<script>
-
-function send(c){ fetch('/cmd?c='+c); }
-
-async function update(){
-
- let res = await fetch('/data');
- let txt = await res.text();
- let p = txt.split(",");
-
- // 🔥 now expecting FULL DATA (11 values)
- if(p.length < 11) return;
-
- let active = parseInt(p[6]);
-
- let l1 = parseInt(p[0]);
- let l2 = parseInt(p[1]);
- let l3 = parseInt(p[2]);
- let l4 = parseInt(p[3]);
-
- // ✅ NEW: individual timers
- let timers = [
-   parseInt(p[7]),
-   parseInt(p[8]),
-   parseInt(p[9]),
-   parseInt(p[10])
- ];
-
- // ===== TABLE UPDATE =====
- document.getElementById("l1").innerHTML=l1;
- document.getElementById("l2").innerHTML=l2;
- document.getElementById("l3").innerHTML=l3;
- document.getElementById("l4").innerHTML=l4;
-
- document.getElementById("mode").innerHTML="Mode: "+p[4];
- document.getElementById("emg").innerHTML="Emergency: "+p[5];
-
- for(let i=1;i<=4;i++){
-
-   document.getElementById("lane"+i).classList.remove("active");
-
-   // 🔥 FIX: different timer per lane
-   document.getElementById("t"+i).innerHTML = timers[i-1] + "s";
-
-   if(i == active){
-     document.getElementById("s"+i).innerHTML="GREEN";
-     document.getElementById("s"+i).className="green";
-   } else {
-     document.getElementById("s"+i).innerHTML="RED";
-     document.getElementById("s"+i).className="red";
-   }
- }
-
- document.getElementById("lane"+active).classList.add("active");
-
- // ===== DENSITY BARS =====
- document.getElementById("bar1").style.height = (l1*8)+"%";
- document.getElementById("bar2").style.height = (l2*8)+"%";
- document.getElementById("bar3").style.width  = (l3*8)+"%";
- document.getElementById("bar4").style.width  = (l4*8)+"%";
-
- // ===== ACTIVE LANE HIGHLIGHT =====
- ["laneV1","laneV2","laneH3","laneH4"].forEach(id=>{
-   document.getElementById(id).classList.remove("activeLane");
- });
-
- if(active==1) document.getElementById("laneV1").classList.add("activeLane");
- if(active==2) document.getElementById("laneV2").classList.add("activeLane");
- if(active==3) document.getElementById("laneH3").classList.add("activeLane");
- if(active==4) document.getElementById("laneH4").classList.add("activeLane");
-}
-
-// 🔥 smoother + real-time feel
-setInterval(update,1000);
-
-</script>
-
-</body>
-</html>
-)rawliteral";
-}
-void sendCycleToAPI(String cycleData){
-
-  if(WiFi.status() != WL_CONNECTED){
-    Serial.println("API ERROR: WiFi disconnected");
-    return;
+  if (WiFi.status() != WL_CONNECTED) {
+    lastHttpCode = -1;
+    lastApiResponse = "WiFi disconnected";
+    lastResult = "WIFI_DOWN";
+    transportErrors++;
+    return true;
   }
 
   WiFiClient client;
   HTTPClient http;
+  http.setTimeout(5000);
 
-  http.begin(client, apiURL);
+  if (!http.begin(client, apiURL)) {
+    lastHttpCode = -2;
+    lastApiResponse = "HTTP begin failed";
+    lastResult = "HTTP_ERROR";
+    transportErrors++;
+    return true;
+  }
 
   http.addHeader("Content-Type", "text/plain");
-
-  Serial.println("Sending cycle data to API...");
-
+  httpAttempts++;
   int httpCode = http.POST(cycleData);
+  lastHttpCode = httpCode;
+  bool retry = false;
 
-  if(httpCode > 0){
+  if (httpCode > 0) {
+    lastApiResponse = http.getString();
+    if (httpCode >= 200 && httpCode < 300) {
+      cyclesSent++;
 
-    Serial.print("API Response Code: ");
-    Serial.println(httpCode);
+      // Backend: 201 + "inserted" = new row, 200 + "duplicate" = nothing written
+      if (lastApiResponse.indexOf("\"status\":\"inserted\"") >= 0) {
+        cyclesInserted++;
+        lastResult = "INSERTED";
+      } else if (lastApiResponse.indexOf("\"status\":\"duplicate\"") >= 0) {
+        cyclesDuplicate++;
+        lastResult = "DUPLICATE";
+      } else {
+        lastResult = "OK_UNKNOWN";
+      }
 
-    String response = http.getString();
-
-    Serial.print("API Response: ");
-    Serial.println(response);
-
-  }
-  else{
-
-    Serial.print("API Connection Failed: ");
-    Serial.println(http.errorToString(httpCode));
+      // Pulse LED twice rapidly to acknowledge success
+      digitalWrite(LED_BUILTIN, HIGH);
+      delay(70);
+      digitalWrite(LED_BUILTIN, LOW);
+      delay(70);
+      digitalWrite(LED_BUILTIN, HIGH);
+      delay(70);
+      digitalWrite(LED_BUILTIN, LOW);
+    } else if (httpCode >= 500) {
+      serverErrors++;
+      lastResult = "SERVER_ERROR";
+      retry = true;
+    } else {
+      // 4xx: packet is invalid, retrying the same bytes cannot succeed
+      cyclesRejected++;
+      lastResult = "REJECTED";
+    }
+  } else {
+    lastApiResponse = http.errorToString(httpCode);
+    lastResult = "HTTP_ERROR";
+    transportErrors++;
+    retry = true;
   }
 
   http.end();
+  return retry;
 }
 
-// ===== SETUP =====
-void setup(){
+void submitCycle(const String& cycleData) {
+  if (pendingCycle.length() > 0) retriesDropped++;  // superseded by a newer cycle
 
+  if (sendCycleToAPI(cycleData)) {
+    pendingCycle = cycleData;
+    pendingAttempts = 1;
+    lastRetry = millis();
+  } else {
+    pendingCycle = "";
+    pendingAttempts = 0;
+  }
+}
+
+void retryPendingCycle() {
+  if (pendingCycle.length() == 0 || millis() - lastRetry < RETRY_INTERVAL_MS) return;
+
+  lastRetry = millis();
+  pendingAttempts++;
+
+  if (!sendCycleToAPI(pendingCycle)) {
+    pendingCycle = "";
+    pendingAttempts = 0;
+  } else if (pendingAttempts >= MAX_ATTEMPTS) {
+    retriesDropped++;
+    pendingCycle = "";
+    pendingAttempts = 0;
+  }
+}
+
+// =====================================================
+// SETUP
+// =====================================================
+
+void setup() {
+  // ESP Serial connects to Arduino Mega Serial1 at 9600 baud.
+  // Larger RX buffer: the Mega keeps streaming LIVE lines while an HTTP POST
+  // blocks for up to ~5 s; the default 256-byte buffer can overrun.
+  Serial.setRxBufferSize(1024);
   Serial.begin(9600);
-  delay(1000);
 
-  Serial.println();
-  Serial.println("================================");
-  Serial.println("   TRAFFICINTELLI ESP8266");
-  Serial.println("================================");
+#if USE_SWAPPED_UART
+  // Move UART0 to GPIO13(RX)/GPIO15(TX); the USB bridge no longer shares RX.
+  Serial.swap();
+#endif
 
-  Serial.print("Connecting to WiFi: ");
-  Serial.println(ssid);
+  // Active-LOW onboard LED configuration
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH); // Off initially
 
+  // Configure Wi-Fi station mode
   WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
   WiFi.begin(ssid, password);
 
-  int attempts = 0;
-
-  while(WiFi.status() != WL_CONNECTED && attempts < 30){
-
-    delay(500);
-
-    Serial.print(".");
-
-    attempts++;
+  // Wait up to 15s for connection
+  unsigned long startWait = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - startWait < 15000) {
+    delay(100);
   }
+
+ if (WiFi.status() == WL_CONNECTED) {
+  digitalWrite(LED_BUILTIN, LOW);
 
   Serial.println();
+  Serial.println("================================");
+  Serial.println(" TrafficIntelli ESP8266 Online");
+  Serial.println("================================");
 
-  if(WiFi.status() == WL_CONNECTED){
+  Serial.print("WiFi SSID: ");
+  Serial.println(WiFi.SSID());
 
-    Serial.println("WiFi Connected!");
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
+  Serial.print("ESP8266 IP Address: ");
+  Serial.println(WiFi.localIP());
 
-    Serial.print("Signal Strength: ");
-    Serial.print(WiFi.RSSI());
-    Serial.println(" dBm");
+  Serial.print("Backend URL: ");
+  Serial.println(apiURL);
 
-  }
-  else{
+  Serial.println("================================");
+} else {
+  Serial.println("ERROR: WiFi connection failed!");
+}
 
-    Serial.println("ERROR: WiFi connection failed!");
-    Serial.println("Check SSID and password.");
-  }
-
-  // Start web server regardless
-  server.on("/", handleRoot);
-  server.on("/data", handleData);
+  // Web server routing
+  server.on("/", HTTP_GET, handleRoot);
+  server.on("/data", HTTP_GET, handleData);
+  server.on("/status", HTTP_GET, handleStatus);
   server.on("/cmd", handleCmd);
 
   server.begin();
-
-  Serial.println("Web server started.");
-  Serial.println("================================");
 }
 
-void loop(){
+// =====================================================
+// MAIN LOOP
+// =====================================================
 
+void loop() {
+  // Periodic Wi-Fi connection health check every 5 seconds
+  if (millis() - lastWifiCheck > 5000) {
+    lastWifiCheck = millis();
+    if (WiFi.status() != WL_CONNECTED) {
+      digitalWrite(LED_BUILTIN, HIGH); // Turn LED off
+      WiFi.reconnect();
+    } else {
+      digitalWrite(LED_BUILTIN, LOW); // Turn LED on (active LOW)
+    }
+  }
+
+  // Handle incoming HTTP client requests
   server.handleClient();
 
-  if(Serial.available()){
+  // Retry a cycle that previously failed (transport error / 5xx)
+  retryPendingCycle();
 
-    String incomingData = Serial.readStringUntil('\n');
-    incomingData.trim();
+  if (Serial.hasOverrun()) rxOverflows++;
 
-    if(incomingData.startsWith("CYCLE|")){
+  // Non-blocking serial read from Arduino Mega
+  while (Serial.available() > 0) {
+    char c = (char)Serial.read();
+    noteRaw(c);              // count every raw byte before any filtering
+    if (c == '\r') continue; // Ignore carriage return
 
-      sendCycleToAPI(incomingData);
+    if (c == '\n') {
+      rxBuffer.trim();
+      if (rxBuffer.length() > 0) {
+        serialLines++;
 
-    }
-    else{
+        // 1. Completed cycle telemetry packet: forward to FastAPI
+        if (rxBuffer.startsWith("CYCLE|")) {
+          cyclePackets++;
 
-      displayData = incomingData;
+          int fields = 1;
+          for (unsigned int i = 0; i < rxBuffer.length(); i++) {
+            if (rxBuffer.charAt(i) == '|') fields++;
+          }
+          lastCycleFields = fields;
+          if (fields != 30) cycleBadFields++;
+
+          digitalWrite(LED_BUILTIN, HIGH);
+          delay(40);
+          digitalWrite(LED_BUILTIN, LOW);
+
+          submitCycle(rxBuffer);
+        }
+        // 2. Real-time telemetry prefixed with LIVE|
+        else if (rxBuffer.startsWith("LIVE|")) {
+          livePackets++;
+          displayData = rxBuffer.substring(5);
+        }
+        // 3. Fallback raw CSV packet: 11 fields = 10 commas
+        else {
+          int commas = 0;
+          for (unsigned int i = 0; i < rxBuffer.length(); i++) {
+            if (rxBuffer.charAt(i) == ',') {
+              commas++;
+            }
+          }
+          if (commas == 10) {
+            displayData = rxBuffer;
+          }
+        }
+      }
+      rxBuffer = ""; // Reset buffer for next packet
+    } else {
+      // Buffer incoming character with safety cap against overflow
+      if (rxBuffer.length() < 300) {
+        rxBuffer += c;
+      } else {
+        rxBuffer = ""; // Flush on oversized/corrupted line
+        rxOverflows++;
+      }
     }
   }
 }

@@ -109,6 +109,18 @@ void loop() {
   checkRFID();
   readESP();
 
+  // Allow trigger from USB Serial Monitor for bench testing
+  if (Serial.available()) {
+    String usbCmd = Serial.readStringUntil('\n');
+    usbCmd.trim();
+    if (usbCmd == "TEST" || usbCmd == "TEST_CYCLE") {
+      Serial.println(">>> MANUAL TEST CYCLE TRIGGERED VIA USB SERIAL <<<");
+      finishCycle();
+      cycleNumber++;
+      startNewCycle();
+    }
+  }
+
   if(emergencyActive) handleEmergency();
   else controlTraffic();
 
@@ -143,88 +155,86 @@ void readSensors(){
 }
 
 // 🔥 RECEIVE COMMAND FROM ESP
-void readESP(){
-
-  if(Serial1.available()){
+void readESP() {
+  if (Serial1.available()) {
 
     String cmd = Serial1.readStringUntil('\n');
-
     cmd.trim();
 
-    Serial.print("CMD RECEIVED → ");
-    Serial.println(cmd);
+    // Ignore empty / garbage UART data
+    if (cmd.length() == 0) {
+      return;
+    }
 
-    // ================= MANUAL CONTROL =================
-
-    if(cmd == "L1"){
+    // Only treat actual commands from ESP as commands
+    if (cmd == "L1") {
       autoMode = false;
       currentLane = 0;
       setLane(currentLane);
       signalStart = millis();
     }
 
-    else if(cmd == "L2"){
+    else if (cmd == "L2") {
       autoMode = false;
       currentLane = 1;
       setLane(currentLane);
       signalStart = millis();
     }
 
-    else if(cmd == "L3"){
+    else if (cmd == "L3") {
       autoMode = false;
       currentLane = 2;
       setLane(currentLane);
       signalStart = millis();
     }
 
-    else if(cmd == "L4"){
+    else if (cmd == "L4") {
       autoMode = false;
       currentLane = 3;
       setLane(currentLane);
       signalStart = millis();
     }
 
-    // ================= AUTO =================
+    else if (cmd == "AUTO") {
+      autoMode = true;
+      currentLane = 0;
+      setLane(currentLane);
+      signalStart = millis();
+      startNewCycle();
 
-    else if(cmd == "AUTO"){
+      Serial.println("AUTO MODE ENABLED");
+    }
 
-    autoMode = true;
-
-    currentLane = 0;
-
-    setLane(currentLane);
-
-    signalStart = millis();
-
-    startNewCycle();
-
-    Serial.println("AUTO MODE ENABLED");
-}
-    // ================= EMERGENCY =================
-
-    else if(cmd == "EMG"){
-
-      // Manual emergency without lane information.
-      // Current lane is used for now.
+    else if (cmd == "EMG") {
       startEmergency(currentLane);
     }
 
-    // Optional manual emergency lane commands
-    else if(cmd == "EMG1"){
+    else if (cmd == "EMG1") {
       startEmergency(0);
     }
 
-    else if(cmd == "EMG2"){
+    else if (cmd == "EMG2") {
       startEmergency(1);
     }
 
-    else if(cmd == "EMG3"){
+    else if (cmd == "EMG3") {
       startEmergency(2);
     }
 
-    else if(cmd == "EMG4"){
+    else if (cmd == "EMG4") {
       startEmergency(3);
     }
+
+    else if (cmd == "TEST" || cmd == "TEST_CYCLE") {
+      // Diagnostic test trigger: sends cycle packet to verify end-to-end pipeline without waiting 120s
+      Serial.println(">>> MANUAL TEST CYCLE TRIGGERED VIA COMMAND <<<");
+      finishCycle();
+      cycleNumber++;
+      startNewCycle();
+    }
+
+    // Everything else is ignored.
+    // In particular, live traffic packets are NOT commands.
   }
 }
 
@@ -706,9 +716,18 @@ void sendData(){
     String mode = densityMode ? "DENSITY" : "NORMAL";
 
     String data =
-      String(count[0])+","+String(count[1])+","+String(count[2])+","+String(count[3])+","+
-      mode+","+String(emergencyActive)+","+String(currentLane+1)+","+
-      String(t[0])+","+String(t[1])+","+String(t[2])+","+String(t[3]);
+  "LIVE|" +
+  String(count[0]) + "," +
+  String(count[1]) + "," +
+  String(count[2]) + "," +
+  String(count[3]) + "," +
+  mode + "," +
+  String(emergencyActive) + "," +
+  String(currentLane + 1) + "," +
+  String(t[0]) + "," +
+  String(t[1]) + "," +
+  String(t[2]) + "," +
+  String(t[3]);
 
     Serial1.println(data);
   }
