@@ -17,8 +17,68 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Custom Styles -->
-  <link rel="stylesheet" href="style.css">
+  <!-- Custom Styles with Cache Busting -->
+  <link rel="stylesheet" href="style.css?v=4.0">
+
+  <style>
+    /* Mode Selector Buttons - Dark Cyberpunk Theme Matching TrafficIntelli */
+    .mode-switch-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 6px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .mode-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mode-pill-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mode-btn,
+    .mode-pill-btn {
+      background: rgba(18, 24, 38, 0.75) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      color: #94a3b8 !important;
+      padding: 7px 15px !important;
+      border-radius: 8px !important;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      outline: none !important;
+      box-shadow: none !important;
+      line-height: 1.4 !important;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+    .mode-btn:hover,
+    .mode-pill-btn:hover {
+      background: rgba(56, 189, 248, 0.12) !important;
+      border-color: rgba(56, 189, 248, 0.4) !important;
+      color: #ffffff !important;
+      transform: translateY(-1px);
+    }
+    .mode-btn.active,
+    .mode-pill-btn.active {
+      background: rgba(56, 189, 248, 0.18) !important;
+      border-color: #38bdf8 !important;
+      color: #38bdf8 !important;
+      font-weight: 700 !important;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.28) !important;
+    }
+  </style>
 </head>
 
 <body>
@@ -52,19 +112,9 @@
           <span class="nav-badge">Live</span>
         </button>
 
-        <button class="nav-item" data-section="live" id="nav-live">
-          <i class="fa-solid fa-crosshairs"></i>
-          <span>Intersection View</span>
-        </button>
-
         <button class="nav-item" data-section="analytics" id="nav-analytics">
           <i class="fa-solid fa-chart-mixed"></i>
           <span>System Analytics</span>
-        </button>
-
-        <button class="nav-item" data-section="predictions" id="nav-predictions">
-          <i class="fa-solid fa-microchip-ai"></i>
-          <span>AI Predictive Hub</span>
         </button>
 
         <button class="nav-item" data-section="history" id="nav-history">
@@ -114,20 +164,21 @@
         </div>
 
         <div class="topbar-right">
-          <!-- Control Mode Toggle Switch -->
+          <!-- Control Mode Selector Switch -->
           <div class="mode-switch-wrapper">
-            <span class="mode-label">Mode:</span>
-            <button class="mode-toggle-btn" id="btnToggleMode">
-              <i class="fa-solid fa-microchip"></i>
-              <span id="activeModeText">ESP8266 HARDWARE</span>
-            </button>
+            <span class="mode-label"><i class="fa-solid fa-sliders"></i> Mode:</span>
+            <div class="mode-pill-group">
+              <button class="mode-btn mode-pill-btn active" id="btnModeProportional" onclick="setSystemMode('PROPORTIONAL')">
+                Proportional Traffic
+              </button>
+              <button class="mode-btn mode-pill-btn" id="btnModeAI" onclick="setSystemMode('AI_PREDICTIVE')">
+                Live AI Predictive
+              </button>
+              <button class="mode-btn mode-pill-btn" id="btnModeManual" onclick="setSystemMode('MANUAL')">
+                Manual Control
+              </button>
+            </div>
           </div>
-
-          <!-- Fast-trigger Emergency Simulator -->
-          <button class="emergency-trigger-btn" id="btnSimulateEmergency">
-            <i class="fa-solid fa-truck-medical"></i>
-            <span id="emergencyBtnText">Simulate Priority EV</span>
-          </button>
 
           <!-- Current Clock and Date -->
           <div class="glass-time-card">
@@ -227,143 +278,21 @@
           </div>
         </section>
 
-        <!-- MAIN DUAL COLUMN: REALISTIC JUNCTION + DETAILED LANES -->
-        <section class="dashboard-core-grid">
-          <!-- 3D-STYLE REALTIME TRAFFIC JUNCTION -->
-          <div class="glass-panel junction-container-panel">
-            <div class="panel-header-custom">
-              <div class="panel-title-group">
-                <i class="fa-solid fa-intersection panel-title-icon"></i>
-                <div>
-                  <h3>Orthogonal 4-Way Junction</h3>
-                  <p>Live physical signal heads & dynamic vehicle queues</p>
-                </div>
-              </div>
-              <div class="live-status-pill">
-                <span class="pulsing-beacon"></span>
-                LIVE SIM
-              </div>
-            </div>
-
-            <!-- INTERSECTION VISUALIZER CANVAS -->
-            <div class="intersection-stage-wrapper">
-              <div class="intersection-stage">
-                <!-- Asphalt Crossroads -->
-                <div class="road-asphalt road-vert">
-                  <div class="road-markings-vert"></div>
-                </div>
-                <div class="road-asphalt road-horiz">
-                  <div class="road-markings-horiz"></div>
-                </div>
-
-                <!-- Intersection Box / Yellow hatched area -->
-                <div class="center-cross-box">
-                  <div class="box-hatches"></div>
-                  <div class="junction-ai-core">
-                    <i class="fa-solid fa-microchip"></i>
-                    <span id="intersectionCoreState">AUTO</span>
-                  </div>
-                </div>
-
-                <!-- LANE 1 (TOP / NORTH) -->
-                <div class="lane-quadrant lane-top" id="quadrant-1">
-                  <div class="lane-info-card">
-                    <span class="lane-card-id">L1 North</span>
-                    <span class="lane-card-count" id="badge-count-1">8 veh</span>
-                  </div>
-                  <!-- Vehicle Queue simulation dots -->
-                  <div class="vehicle-queue queue-vert" id="queue-1"></div>
-                  <!-- Signal Head -->
-                  <div class="traffic-signal-post post-top" id="signal1">
-                    <div class="signal-housing">
-                      <div class="bulb red" title="Red Light"></div>
-                      <div class="bulb yellow" title="Amber Transition"></div>
-                      <div class="bulb green" title="Green Go"></div>
-                    </div>
-                    <div class="signal-timer-chip" id="chip-timer-1">--s</div>
-                  </div>
-                </div>
-
-                <!-- LANE 2 (LEFT / WEST) -->
-                <div class="lane-quadrant lane-left" id="quadrant-2">
-                  <div class="lane-info-card">
-                    <span class="lane-card-id">L2 West</span>
-                    <span class="lane-card-count" id="badge-count-2">16 veh</span>
-                  </div>
-                  <div class="vehicle-queue queue-horiz" id="queue-2"></div>
-                  <div class="traffic-signal-post post-left" id="signal2">
-                    <div class="signal-housing">
-                      <div class="bulb red"></div>
-                      <div class="bulb yellow"></div>
-                      <div class="bulb green"></div>
-                    </div>
-                    <div class="signal-timer-chip" id="chip-timer-2">--s</div>
-                  </div>
-                </div>
-
-                <!-- LANE 3 (BOTTOM / SOUTH) -->
-                <div class="lane-quadrant lane-bottom" id="quadrant-3">
-                  <div class="lane-info-card">
-                    <span class="lane-card-id">L3 South</span>
-                    <span class="lane-card-count" id="badge-count-3">7 veh</span>
-                  </div>
-                  <div class="vehicle-queue queue-vert" id="queue-3"></div>
-                  <div class="traffic-signal-post post-bottom" id="signal3">
-                    <div class="signal-housing">
-                      <div class="bulb red"></div>
-                      <div class="bulb yellow"></div>
-                      <div class="bulb green"></div>
-                    </div>
-                    <div class="signal-timer-chip" id="chip-timer-3">--s</div>
-                  </div>
-                </div>
-
-                <!-- LANE 4 (RIGHT / EAST) -->
-                <div class="lane-quadrant lane-right" id="quadrant-4">
-                  <div class="lane-info-card">
-                    <span class="lane-card-id">L4 East</span>
-                    <span class="lane-card-count" id="badge-count-4">24 veh</span>
-                  </div>
-                  <div class="vehicle-queue queue-horiz" id="queue-4"></div>
-                  <div class="traffic-signal-post post-right" id="signal4">
-                    <div class="signal-housing">
-                      <div class="bulb red"></div>
-                      <div class="bulb yellow"></div>
-                      <div class="bulb green"></div>
-                    </div>
-                    <div class="signal-timer-chip" id="chip-timer-4">--s</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Junction Control Bar -->
-              <div class="junction-toolbar">
-                <div class="legend-item">
-                  <span class="legend-bullet green"></span> Green Active
-                </div>
-                <div class="legend-item">
-                  <span class="legend-bullet red"></span> Red Stopped
-                </div>
-                <div class="legend-item">
-                  <span class="legend-bullet yellow"></span> Clearance / Amber
-                </div>
-                <div class="toolbar-stats-right">
-                  <span>Cycle progress:</span>
-                  <strong id="cycleProgressPercent">45%</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- LANE STATUS TELEMETRY CARDS -->
+        <!-- MAIN SPLIT: CORRIDOR DENSITY (LEFT) & AI CONGESTION FORECASTING (RIGHT) -->
+        <section class="dashboard-core-split-grid">
+          <!-- LEFT COLUMN: CORRIDOR DENSITY & ALLOCATION -->
           <div class="glass-panel lanes-container-panel">
             <div class="panel-header-custom">
               <div class="panel-title-group">
                 <i class="fa-solid fa-road panel-title-icon"></i>
                 <div>
                   <h3>Corridor Density & Allocation</h3>
-                  <p>Sensor queue telemetry & countdown timers</p>
+                  <p>Real-time vehicle queue monitoring, active signal phases & green countdowns</p>
                 </div>
+              </div>
+              <div class="live-status-pill" id="dashboardModePill">
+                <span class="pulsing-beacon"></span>
+                <span id="dashboardModePillText">PROPORTIONAL TRAFFIC</span>
               </div>
             </div>
 
@@ -372,40 +301,59 @@
               <!-- Rendered via JS -->
             </div>
 
-            <!-- Quick Simulator Controls -->
-            <div class="sim-quick-controls">
-              <h4>Interactive Vehicle Density Injector</h4>
-              <p>Simulate instant hardware sensor trigger values:</p>
-              <div class="sim-buttons-grid">
-                <button class="btn-sim-action" onclick="simulateHighDensity(1)">
-                  <i class="fa-solid fa-arrow-up"></i> Spike L1
+            <!-- Manual Mode Control Bar -->
+            <div class="manual-controls-panel" id="manualControlsPanel" style="display: none;">
+              <div class="manual-panel-header">
+                <div class="manual-title">
+                  <i class="fa-solid fa-hand"></i>
+                  <span>Manual Lane Dispatch Control</span>
+                </div>
+                <span class="manual-badge">Direct Mega Override</span>
+              </div>
+              <p class="manual-sub">Click a lane to immediately route green signal priority via ESP8266 & Arduino Mega:</p>
+              <div class="manual-buttons-grid">
+                <button class="btn-manual-lane" id="btnManualL1" onclick="dispatchManualLane(1)">
+                  <span class="btn-lane-pill">L1</span>
+                  <div class="btn-lane-meta">
+                    <strong>Lane 1 (North)</strong>
+                    <span>Dispatch Green &uarr;</span>
+                  </div>
                 </button>
-                <button class="btn-sim-action" onclick="simulateHighDensity(2)">
-                  <i class="fa-solid fa-arrow-up"></i> Spike L2
+                <button class="btn-manual-lane" id="btnManualL2" onclick="dispatchManualLane(2)">
+                  <span class="btn-lane-pill">L2</span>
+                  <div class="btn-lane-meta">
+                    <strong>Lane 2 (West)</strong>
+                    <span>Dispatch Green &larr;</span>
+                  </div>
                 </button>
-                <button class="btn-sim-action" onclick="simulateHighDensity(3)">
-                  <i class="fa-solid fa-arrow-up"></i> Spike L3
+                <button class="btn-manual-lane" id="btnManualL3" onclick="dispatchManualLane(3)">
+                  <span class="btn-lane-pill">L3</span>
+                  <div class="btn-lane-meta">
+                    <strong>Lane 3 (South)</strong>
+                    <span>Dispatch Green &darr;</span>
+                  </div>
                 </button>
-                <button class="btn-sim-action" onclick="simulateHighDensity(4)">
-                  <i class="fa-solid fa-arrow-up"></i> Spike L4
+                <button class="btn-manual-lane" id="btnManualL4" onclick="dispatchManualLane(4)">
+                  <span class="btn-lane-pill">L4</span>
+                  <div class="btn-lane-meta">
+                    <strong>Lane 4 (East)</strong>
+                    <span>Dispatch Green &rarr;</span>
+                  </div>
                 </button>
               </div>
             </div>
           </div>
-        </section>
 
-        <!-- SECONDARY SPLIT: AI PREDICTIVE INTELLIGENCE & DISTRIBUTION -->
-        <section class="dashboard-secondary-grid">
-          <!-- AI PREDICTION CARD -->
-          <div class="glass-panel ai-predictive-hero-panel">
+          <!-- RIGHT COLUMN: AI CONGESTION FORECASTING & DYNAMIC SIGNAL OPTIMIZATION -->
+          <div class="glass-panel ai-forecasting-panel">
             <div class="panel-header-custom">
               <div class="panel-title-group">
                 <div class="ai-sparkle-badge">
-                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  <i class="fa-solid fa-brain-circuit"></i>
                 </div>
                 <div>
-                  <h3>AI Adaptive Inference Engine</h3>
-                  <p>Next-cycle congestion forecasting & green duration recommendations</p>
+                  <h3>AI Congestion Forecasting & Dynamic Signal Optimization</h3>
+                  <p>Markov chain predictive model evaluating vehicle influx rates & proactive phase elongation</p>
                 </div>
               </div>
               <span class="ai-online-badge">
@@ -413,82 +361,98 @@
               </span>
             </div>
 
-            <div class="prediction-cards-matrix">
-              <div class="predict-cell">
-                <span class="cell-label">Peak Congestion Point</span>
-                <div class="cell-val-box">
-                  <strong class="cell-val highlight-lane" id="currentHighLane">L2</strong>
-                  <span class="cell-badge danger">High Queue</span>
-                </div>
-                <span class="cell-sub">Detected via density matrix</span>
+            <!-- ADAPTIVE SCHEDULING POLICY MATRIX -->
+            <div class="matrix-card-wrap">
+              <div class="matrix-header-row">
+                <span class="matrix-title"><i class="fa-solid fa-table-cells"></i> Adaptive Scheduling Policy Matrix</span>
+                <span class="matrix-pulse-tag">Live Policy Sync</span>
               </div>
-
-              <div class="predict-cell">
-                <span class="cell-label">Predicted Next Hotspot</span>
-                <div class="cell-val-box">
-                  <strong class="cell-val highlight-lane" id="predictedLane">L2</strong>
-                  <span class="cell-badge warning">Bottleneck</span>
-                </div>
-                <span class="cell-sub">Markov chain transition model</span>
-              </div>
-
-              <div class="predict-cell">
-                <span class="cell-label">AI Recommended Green</span>
-                <div class="cell-val-box">
-                  <strong class="cell-val"><span id="recommendedGreen">50</span>s</strong>
-                  <span class="cell-badge success">+20s Bonus</span>
-                </div>
-                <span class="cell-sub">Optimal clearance window</span>
-              </div>
-
-              <div class="predict-cell">
-                <span class="cell-label">Inference Confidence</span>
-                <div class="cell-val-box">
-                  <strong class="cell-val"><span id="confidence">87</span>%</strong>
-                  <div class="mini-confidence-ring">
-                    <svg viewBox="0 0 36 36">
-                      <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                      <path class="circle" stroke-dasharray="87, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                    </svg>
-                  </div>
-                </div>
-                <span class="cell-sub">Trained on historic cycle runs</span>
+              <div class="table-container">
+                <table class="modern-table">
+                  <thead>
+                    <tr>
+                      <th>Lane</th>
+                      <th>Density</th>
+                      <th>Base</th>
+                      <th>AI Extra</th>
+                      <th>Projected Discharge</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="predictionTableBody">
+                    <tr>
+                      <td><strong>L1 (North)</strong></td>
+                      <td><span class="density-chip low">LOW</span></td>
+                      <td>30s</td>
+                      <td>+0s</td>
+                      <td>Pred: 8 veh</td>
+                      <td><span class="status-badge success">Optimal</span></td>
+                    </tr>
+                    <tr>
+                      <td><strong>L2 (West)</strong></td>
+                      <td><span class="density-chip medium">MEDIUM</span></td>
+                      <td>30s</td>
+                      <td>+10s</td>
+                      <td>Pred: 16 veh</td>
+                      <td><span class="status-badge warning">Extended</span></td>
+                    </tr>
+                    <tr>
+                      <td><strong>L3 (South)</strong></td>
+                      <td><span class="density-chip low">LOW</span></td>
+                      <td>30s</td>
+                      <td>+0s</td>
+                      <td>Pred: 7 veh</td>
+                      <td><span class="status-badge success">Optimal</span></td>
+                    </tr>
+                    <tr>
+                      <td><strong>L4 (East)</strong></td>
+                      <td><span class="density-chip high">HIGH</span></td>
+                      <td>30s</td>
+                      <td>+20s</td>
+                      <td>Pred: 24 veh</td>
+                      <td><span class="status-badge danger">Heavy Extension</span></td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            <!-- Cycle Extension Details Ribbon -->
-            <div class="cycle-telemetry-ribbon">
-              <div class="ribbon-col">
-                <span>Cycle Start Time:</span>
-                <strong id="startTime">11:30:00</strong>
+            <!-- SUMMARY OF AI PREDICTION PARAGRAPH -->
+            <div class="ai-summary-box">
+              <div class="ai-summary-header">
+                <i class="fa-solid fa-microchip-ai"></i>
+                <span>Summary of AI Prediction & Routing Behavior</span>
               </div>
-              <div class="ribbon-col">
-                <span>Cycle End Time:</span>
-                <strong id="endTime">11:32:30</strong>
-              </div>
-              <div class="ribbon-col">
-                <span>Extended Lanes:</span>
-                <strong id="extendedLanes" class="text-accent">L2, L4</strong>
-              </div>
-              <div class="ribbon-col">
-                <span>Extra Time Given:</span>
-                <strong id="extensionTime">+30 sec</strong>
-              </div>
-              <div class="ribbon-col">
-                <span>Remaining in Queue:</span>
-                <strong id="vehiclesRemaining" class="text-warning">10</strong>
+              <p class="ai-summary-text" id="aiSummaryParagraph">
+                The AI predictive engine leverages real-time Poisson arrival probability and discrete-time Markov chains to forecast upcoming vehicle influx rates across all 4 intersection approaches. By analyzing high-resolution ultrasonic sensor telemetry and historical junction queue dissipation patterns, the model proactively predicts downstream bottlenecks before physical saturation occurs. When an escalating queue density is detected (such as in Lane 4), the dynamic optimization algorithm elongates the active green clearance phase up to +20 seconds beyond the baseline 30-second window, preventing spillback congestion while maintaining fair cycle distribution across orthogonal cross-traffic lanes.
+              </p>
+              <div class="ai-summary-meta">
+                <div class="meta-item">
+                  <span class="meta-label">Primary Bottleneck:</span>
+                  <strong class="meta-value text-accent" id="summaryHotspot">Lane 4 (East)</strong>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Optimization Benefit:</span>
+                  <strong class="meta-value text-success">+34% Faster Clearance</strong>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Decision Model:</span>
+                  <strong class="meta-value">Markov Chain & Random Forest</strong>
+                </div>
               </div>
             </div>
           </div>
+        </section>
 
-          <!-- LIVE DISTRIBUTION CHART -->
-          <div class="glass-panel chart-panel">
+        <!-- SECONDARY SPLIT: VOLUME DISTRIBUTION CHART -->
+        <section class="dashboard-secondary-grid">
+          <div class="glass-panel chart-panel full-chart-panel">
             <div class="panel-header-custom">
               <div class="panel-title-group">
                 <i class="fa-solid fa-chart-column panel-title-icon"></i>
                 <div>
-                  <h3>Corridor Volume Distribution</h3>
-                  <p>Real-time vehicle split between 4 arms</p>
+                  <h3>Corridor Volume Distribution & Live Arm Split</h3>
+                  <p>Real-time vehicle split and queue distribution between all 4 physical arms</p>
                 </div>
               </div>
             </div>
@@ -499,135 +463,7 @@
         </section>
       </div>
 
-      <!-- ==========================================
-           SECTION 2: LIVE INTERSECTION FULL VIEW
-      =========================================== -->
-      <div class="tab-pane" id="pane-live">
-        <div class="pane-header-banner">
-          <div>
-            <h2>Dedicated Intersection Sensor Diagnostics</h2>
-            <p>Direct inspection of ESP8266 Pin registers, Ultrasonic radar pings & IR gate sensors</p>
-          </div>
-          <button class="btn-refresh-api" onclick="fetchBackendSummary()">
-            <i class="fa-solid fa-rotate"></i> Ping Backend
-          </button>
-        </div>
 
-        <div class="live-inspection-grid">
-          <!-- Big Visualizer Replica -->
-          <div class="glass-panel" style="grid-column: span 8;">
-            <div class="panel-header-custom">
-              <div class="panel-title-group">
-                <i class="fa-solid fa-satellite-dish panel-title-icon"></i>
-                <h3>Direct Actuator State</h3>
-              </div>
-            </div>
-            <div class="live-actuator-grid">
-              <div class="actuator-card" id="actuator-L1">
-                <div class="actuator-header">
-                  <span class="lane-title">Lane 1 (North Bound)</span>
-                  <span class="signal-tag" id="act-tag-1">RED STOP</span>
-                </div>
-                <div class="actuator-body">
-                  <div class="sensor-row">
-                    <span>IR Breakbeam 1:</span>
-                    <strong class="text-success"><i class="fa-solid fa-check"></i> Clear</strong>
-                  </div>
-                  <div class="sensor-row">
-                    <span>Ultrasonic Depth:</span>
-                    <strong>12.4 cm (Queue: <span id="act-v-1">8</span>)</strong>
-                  </div>
-                  <div class="sensor-row">
-                    <span>Relay Output:</span>
-                    <span class="code-pill">D5 HIGH / D6 LOW</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="actuator-card" id="actuator-L2">
-                <div class="actuator-header">
-                  <span class="lane-title">Lane 2 (West Bound)</span>
-                  <span class="signal-tag" id="act-tag-2">GREEN GO</span>
-                </div>
-                <div class="actuator-body">
-                  <div class="sensor-row">
-                    <span>IR Breakbeam 2:</span>
-                    <strong class="text-danger"><i class="fa-solid fa-circle-exclamation"></i> Vehicle Passing</strong>
-                  </div>
-                  <div class="sensor-row">
-                    <span>Ultrasonic Depth:</span>
-                    <strong>5.1 cm (Queue: <span id="act-v-2">16</span>)</strong>
-                  </div>
-                  <div class="sensor-row">
-                    <span>Relay Output:</span>
-                    <span class="code-pill">D7 HIGH / D8 LOW</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="actuator-card" id="actuator-L3">
-                <div class="actuator-header">
-                  <span class="lane-title">Lane 3 (South Bound)</span>
-                  <span class="signal-tag" id="act-tag-3">RED STOP</span>
-                </div>
-                <div class="actuator-body">
-                  <div class="sensor-row">
-                    <span>IR Breakbeam 3:</span>
-                    <strong class="text-success"><i class="fa-solid fa-check"></i> Clear</strong>
-                  </div>
-                  <div class="sensor-row">
-                    <span>Ultrasonic Depth:</span>
-                    <strong>14.8 cm (Queue: <span id="act-v-3">7</span>)</strong>
-                  </div>
-                  <div class="sensor-row">
-                    <span>Relay Output:</span>
-                    <span class="code-pill">D1 HIGH / D2 LOW</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="actuator-card" id="actuator-L4">
-                <div class="actuator-header">
-                  <span class="lane-title">Lane 4 (East Bound)</span>
-                  <span class="signal-tag" id="act-tag-4">RED STOP</span>
-                </div>
-                <div class="actuator-body">
-                  <div class="sensor-row">
-                    <span>IR Breakbeam 4:</span>
-                    <strong class="text-danger"><i class="fa-solid fa-circle-exclamation"></i> Vehicle Passing</strong>
-                  </div>
-                  <div class="sensor-row">
-                    <span>Ultrasonic Depth:</span>
-                    <strong>3.2 cm (Queue: <span id="act-v-4">24</span>)</strong>
-                  </div>
-                  <div class="sensor-row">
-                    <span>Relay Output:</span>
-                    <span class="code-pill">D3 HIGH / D4 LOW</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- NodeMCU / ESP8266 Live Terminal -->
-          <div class="glass-panel" style="grid-column: span 4;">
-            <div class="panel-header-custom">
-              <div class="panel-title-group">
-                <i class="fa-solid fa-terminal panel-title-icon"></i>
-                <h3>Hardware Serial Stream</h3>
-              </div>
-              <button class="btn-icon" onclick="clearTerminal()"><i class="fa-solid fa-trash-can"></i></button>
-            </div>
-            <div class="terminal-container" id="terminalBox">
-              <div class="terminal-line system">[SYSTEM BOOT] TrafficIntelli v2.5 IOE Kernel initialized.</div>
-              <div class="terminal-line">[WIFI] Connected to AP: 'IntelliTraffic_Mesh' (IP: 192.168.4.76)</div>
-              <div class="terminal-line">[FASTAPI] Connected to backend endpoint: http://localhost:8000</div>
-              <div class="terminal-line info">[SYNC] Cycle 24 committed to PostgreSQL database.</div>
-              <div class="terminal-line">[CYCLE] Active Lane: L1 | Duration: 150s | Queue: 55 veh</div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- ==========================================
            SECTION 3: HISTORICAL & ANALYTICS
@@ -693,76 +529,7 @@
         </div>
       </div>
 
-      <!-- ==========================================
-           SECTION 4: PREDICTIONS HUB
-      =========================================== -->
-      <div class="tab-pane" id="pane-predictions">
-        <div class="pane-header-banner">
-          <div>
-            <h2>AI Congestion Forecasting & Dynamic Signal Optimization</h2>
-            <p>Markov chain predictive model evaluating vehicle influx rates & proactive phase elongation</p>
-          </div>
-        </div>
 
-        <div class="prediction-full-hub-grid">
-          <div class="glass-panel">
-            <div class="panel-header-custom">
-              <div class="panel-title-group">
-                <i class="fa-solid fa-brain-circuit panel-title-icon"></i>
-                <h3>Adaptive Scheduling Policy Matrix</h3>
-              </div>
-            </div>
-            <div class="table-container">
-              <table class="modern-table">
-                <thead>
-                  <tr>
-                    <th>Lane ID</th>
-                    <th>Measured Density</th>
-                    <th>Base Green Time</th>
-                    <th>AI Suggested Extra</th>
-                    <th>Projected Discharge Rate</th>
-                    <th>Recommended Status</th>
-                  </tr>
-                </thead>
-                <tbody id="predictionTableBody">
-                  <tr>
-                    <td><strong>L1 (North)</strong></td>
-                    <td><span class="density-chip low">LOW</span></td>
-                    <td>30s</td>
-                    <td>+0s</td>
-                    <td>94% within window</td>
-                    <td><span class="status-badge success">Optimal</span></td>
-                  </tr>
-                  <tr>
-                    <td><strong>L2 (West)</strong></td>
-                    <td><span class="density-chip medium">MEDIUM</span></td>
-                    <td>40s</td>
-                    <td>+10s</td>
-                    <td>88% within window</td>
-                    <td><span class="status-badge warning">Extended</span></td>
-                  </tr>
-                  <tr>
-                    <td><strong>L3 (South)</strong></td>
-                    <td><span class="density-chip low">LOW</span></td>
-                    <td>30s</td>
-                    <td>+0s</td>
-                    <td>97% within window</td>
-                    <td><span class="status-badge success">Optimal</span></td>
-                  </tr>
-                  <tr>
-                    <td><strong>L4 (East)</strong></td>
-                    <td><span class="density-chip high">HIGH</span></td>
-                    <td>50s</td>
-                    <td>+20s</td>
-                    <td>82% within window</td>
-                    <td><span class="status-badge danger">Heavy Queue Extension</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- ==========================================
            SECTION 5: CYCLE HISTORY TABLE

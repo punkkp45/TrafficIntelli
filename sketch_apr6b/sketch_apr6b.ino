@@ -6,12 +6,12 @@
 // WIFI & BACKEND CONFIGURATION
 // =====================================================
 
-const char* ssid     = "Kaushal_19";
-const char* password = "123456789";
+const char* ssid     = "PUNK GT 6";
+const char* password = "punkgt.exe";
 
 // PC running FastAPI server.
 // Must be the PC's CURRENT IPv4 on the SAME network as the ESP (check with ipconfig).
-const char* apiHost = "10.158.197.90";
+const char* apiHost = "10.233.3.90";
 const int   apiPort = 8001;
 const String apiURL = String("http://") + apiHost + ":" + apiPort + "/traffic/cycle";
 

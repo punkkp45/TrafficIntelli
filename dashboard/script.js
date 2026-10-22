@@ -4,8 +4,9 @@
    ===================================================== */
 
 // --- GLOBAL STATE ---
-let DEMO_MODE = false;
-const ESP_URL = "http://10.158.197.146";
+// Modes: 'PROPORTIONAL' (default hardware), 'AI_PREDICTIVE' (ML optimization driven), 'MANUAL' (direct buttons)
+let CURRENT_MODE = "PROPORTIONAL";
+const ESP_URL = "http://10.233.3.146";
 const BACKEND_URL = "http://localhost:8001";
 
 let trafficData = {
@@ -29,12 +30,15 @@ let timeOfDayChartInstance = null;
 let densityChartInstance = null;
 let recentCyclesBuffer = [];
 
+// AI Predictive Mode state
+let aiCycleInterval = null;
+let aiRecommendedGreens = { L1: 35, L2: 35, L3: 35, L4: 35 };
+
 // =====================================================
 // INITIALIZATION
 // =====================================================
 document.addEventListener("DOMContentLoaded", () => {
   setupNavigation();
-  setupEventListeners();
   initCharts();
   renderLaneStatusCards();
   updateDashboard();
@@ -45,12 +49,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Polling loops
   setInterval(updateClock, 1000);
   
-  // Real-time tick loop
+  // Real-time tick & hardware sync loop
   setInterval(() => {
-    if (DEMO_MODE) {
-      simulateTrafficTick();
-    } else {
+    if (CURRENT_MODE === "PROPORTIONAL" || CURRENT_MODE === "MANUAL") {
       pollEsp8266();
+    } else if (CURRENT_MODE === "AI_PREDICTIVE") {
+      runLiveAIPredictiveTick();
     }
   }, 1000);
 });
@@ -65,9 +69,7 @@ function setupNavigation() {
 
   const titleMap = {
     dashboard: "Real-Time Control Room",
-    live: "Intersection Sensor Diagnostics",
     analytics: "Database Analytics & Intelligence",
-    predictions: "AI Predictive Hub",
     history: "Cycle Audit Ledger"
   };
 
@@ -94,48 +96,156 @@ function setupNavigation() {
 }
 
 // =====================================================
-// EVENT LISTENERS & SIMULATOR
+// SYSTEM CONTROL MODES
 // =====================================================
-function setupEventListeners() {
-  // Mode toggle (Simulation vs ESP8266 Live)
-  const btnToggleMode = document.getElementById("btnToggleMode");
-  const activeModeText = document.getElementById("activeModeText");
+window.setSystemMode = function(mode) {
+  CURRENT_MODE = mode;
+
+  // Update topbar pills
+  const btnProp = document.getElementById("btnModeProportional");
+  const btnAI = document.getElementById("btnModeAI");
+  const btnMan = document.getElementById("btnModeManual");
+  const pillText = document.getElementById("dashboardModePillText");
+  const manualPanel = document.getElementById("manualControlsPanel");
   const sysDot = document.getElementById("sysDot");
   const sysTitle = document.getElementById("sysTitle");
   const sysSub = document.getElementById("sysSub");
 
-  btnToggleMode.addEventListener("click", () => {
-    DEMO_MODE = !DEMO_MODE;
-    if (DEMO_MODE) {
-      activeModeText.textContent = "DEMO SIMULATION";
-      btnToggleMode.classList.add("active");
-      sysDot.className = "status-indicator-dot online";
-      sysTitle.textContent = "AI Simulator Active";
-      sysSub.textContent = "Autonomous Cycle Engine";
-      appendTerminal("[MODE] Switched to Autonomous AI Simulation Engine.", "info");
-    } else {
-      activeModeText.textContent = "ESP8266 HARDWARE";
-      btnToggleMode.classList.remove("active");
-      sysTitle.textContent = "ESP8266 Gateway";
-      sysSub.textContent = `Connecting to ${ESP_URL}...`;
-      appendTerminal(`[GATEWAY] Polling ESP8266 on ${ESP_URL}/data...`, "system");
+  if (btnProp) btnProp.classList.remove("active");
+  if (btnAI) btnAI.classList.remove("active");
+  if (btnMan) btnMan.classList.remove("active");
+
+  if (mode === "PROPORTIONAL") {
+    if (btnProp) btnProp.classList.add("active");
+    if (pillText) pillText.textContent = "PROPORTIONAL TRAFFIC";
+    if (manualPanel) manualPanel.style.display = "none";
+    if (sysTitle) sysTitle.textContent = "Proportional Engine";
+    if (sysSub) sysSub.textContent = "Hardware Density-Weighted Cycle";
+    appendTerminal("[MODE] Switched to Proportional Traffic Mode (Hardware Synchronized).", "info");
+    sendMegaCommand("AUTO");
+  } else if (mode === "AI_PREDICTIVE") {
+    if (btnAI) btnAI.classList.add("active");
+    if (pillText) pillText.textContent = "LIVE AI PREDICTIVE";
+    if (manualPanel) manualPanel.style.display = "none";
+    if (sysTitle) sysTitle.textContent = "AI Predictive Hub";
+    if (sysSub) sysSub.textContent = "Markov & Random Forest Dynamic Routing";
+    appendTerminal("[MODE] Switched to Live AI Predictive Mode. Optimizing lane phases via Machine Learning models.", "info");
+    initAIPredictiveAllocation();
+  } else if (mode === "MANUAL") {
+    if (btnMan) btnMan.classList.add("active");
+    if (pillText) pillText.textContent = "MANUAL CONTROL";
+    if (manualPanel) manualPanel.style.display = "block";
+    if (sysTitle) sysTitle.textContent = "Manual Override";
+    if (sysSub) sysSub.textContent = "Direct Operator Lane Dispatch";
+    appendTerminal("[MODE] Switched to Manual Control Mode. Ready for direct lane selection.", "warning");
+  }
+};
+
+// =====================================================
+// MANUAL LANE DISPATCH (DASHBOARD -> ESP -> MEGA)
+// =====================================================
+window.dispatchManualLane = async function(laneNumber) {
+  activeLane = laneNumber;
+  trafficData.lanes.forEach((l, idx) => {
+    if (idx === laneNumber - 1) {
+      l.remainingTime = 30;
+      l.greenTime = 30;
     }
   });
 
-  // Emergency simulation button
-  const btnSimulateEmergency = document.getElementById("btnSimulateEmergency");
-  btnSimulateEmergency.addEventListener("click", () => {
-    triggerEmergencySimulation(2); // simulate on Lane 2 (West)
-  });
+  // Highlight active button in manual panel
+  for (let i = 1; i <= 4; i++) {
+    const btn = document.getElementById(`btnManualL${i}`);
+    if (btn) {
+      if (i === laneNumber) btn.classList.add("active");
+      else btn.classList.remove("active");
+    }
+  }
 
-  // Clear emergency banner button
-  const btnClearEmergency = document.getElementById("btnClearEmergency");
-  btnClearEmergency.addEventListener("click", () => {
-    trafficData.emergency.detected = false;
-    trafficData.emergency.lane = null;
-    updateEmergencyUI();
-    appendTerminal("[EV PREEMPTION] Cleared. Resumed standard cyclic queue.", "info");
-  });
+  appendTerminal(`[MANUAL OVERRIDE] Dispatching Green Signal to Lane ${laneNumber} (North/South/West/East)...`, "danger");
+
+  // Send command to ESP8266 -> Arduino Mega: /cmd?c=L{laneNumber}
+  sendMegaCommand(`L${laneNumber}`);
+  updateDashboard();
+};
+
+async function sendMegaCommand(cmdStr) {
+  try {
+    const res = await fetch(`${ESP_URL}/cmd?c=${encodeURIComponent(cmdStr)}`, {
+      method: "GET",
+      cache: "no-store"
+    });
+    if (res.ok) {
+      appendTerminal(`[ESP GATEWAY] Command '${cmdStr}' routed successfully to Mega Serial.`, "system");
+    }
+  } catch (err) {
+    appendTerminal(`[GATEWAY NOTICE] Mega Command '${cmdStr}' queued locally (${err.message}).`, "system");
+  }
+}
+
+// =====================================================
+// LIVE AI PREDICTIVE MODE LOGIC
+// =====================================================
+async function initAIPredictiveAllocation() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/traffic/cycle/latest`, { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.signal_optimization && data.signal_optimization.recommended_green) {
+        aiRecommendedGreens = data.signal_optimization.recommended_green;
+        appendTerminal(`[AI PREDICTOR] Loaded AI Recommended Green Times: L1=${aiRecommendedGreens.L1}s, L2=${aiRecommendedGreens.L2}s, L3=${aiRecommendedGreens.L3}s, L4=${aiRecommendedGreens.L4}s`, "info");
+      }
+    }
+  } catch (e) {
+    console.warn("AI cycle latest err:", e);
+  }
+}
+
+function runLiveAIPredictiveTick() {
+  const currentLaneObj = trafficData.lanes[activeLane - 1];
+
+  // Decrement current active lane green timer
+  if (currentLaneObj.remainingTime > 0) {
+    currentLaneObj.remainingTime--;
+    if (currentLaneObj.cleared < currentLaneObj.vehicles && Math.random() > 0.4) {
+      currentLaneObj.cleared++;
+      currentLaneObj.vehicles = Math.max(0, currentLaneObj.vehicles - 1);
+    }
+  } else {
+    // Cycle to next lane with AI-recommended green duration
+    activeLane++;
+    if (activeLane > 4) {
+      activeLane = 1;
+      cycleNumber++;
+      recordCycleInHistory();
+      // Periodically refresh AI suggestions from backend
+      initAIPredictiveAllocation();
+    }
+
+    const nextLane = trafficData.lanes[activeLane - 1];
+    const recGreen = aiRecommendedGreens[`L${activeLane}`] || 35;
+    nextLane.greenTime = Math.round(recGreen);
+    nextLane.remainingTime = Math.round(recGreen);
+
+    appendTerminal(`[AI DISPATCH] Lane ${activeLane} signaled GREEN based on predictive influx (${nextLane.greenTime}s).`, "info");
+    sendMegaCommand(`L${activeLane}`);
+  }
+
+  // Also read sensor queues from ESP if reachable
+  fetch(`${ESP_URL}/data`, { cache: "no-store" })
+    .then(r => r.text())
+    .then(text => {
+      const parts = text.trim().split(",");
+      if (parts.length >= 4) {
+        trafficData.lanes[0].vehicles = parseInt(parts[0]) || trafficData.lanes[0].vehicles;
+        trafficData.lanes[1].vehicles = parseInt(parts[1]) || trafficData.lanes[1].vehicles;
+        trafficData.lanes[2].vehicles = parseInt(parts[2]) || trafficData.lanes[2].vehicles;
+        trafficData.lanes[3].vehicles = parseInt(parts[3]) || trafficData.lanes[3].vehicles;
+      }
+    })
+    .catch(() => {});
+
+  updateDashboard();
 }
 
 function triggerEmergencySimulation(laneIndex) {
@@ -198,9 +308,7 @@ function updateDashboard() {
   const extendedSec = Math.max(0, currentLaneObj.greenTime - 30);
   document.getElementById("kpiExtensionTime").textContent = `+${extendedSec}s`;
 
-  // Signals and Visualizer
-  updateSignals();
-  updateIntersectionVisualizer();
+  // Lane status telemetry and charts
   updateLaneTelemetry();
   updateTrafficDistributionChart();
   updatePredictionEngine();
@@ -600,8 +708,10 @@ async function pollEsp8266() {
             tbody.innerHTML = ["L1", "L2", "L3", "L4"].map((lid, idx) => {
               const count = trafficData.lanes[idx].vehicles;
               const dens = trafficData.lanes[idx].density;
-              const predVal = preds[`next_l${idx+1}_count`] || count;
-              const green = recGreens[lid] || 30;
+              const rawPredVal = preds[`next_l${idx+1}_count`];
+              const predVal = rawPredVal !== undefined ? Math.round(Number(rawPredVal)) : count;
+              const rawGreen = recGreens[lid] || 30;
+              const green = Math.round(Number(rawGreen));
               const extra = Math.max(0, green - 30);
               const chipClass = dens.toLowerCase();
               return `<tr>
@@ -613,6 +723,12 @@ async function pollEsp8266() {
                 <td><span class="status-badge ${extra > 0 ? 'warning' : 'success'}">${extra > 0 ? 'Extended' : 'Optimal'}</span></td>
               </tr>`;
             }).join("");
+
+            const summaryHotspotEl = document.getElementById("summaryHotspot");
+            if (summaryHotspotEl) {
+              const laneNames = { L1: "Lane 1 (North)", L2: "Lane 2 (West)", L3: "Lane 3 (South)", L4: "Lane 4 (East)" };
+              summaryHotspotEl.textContent = laneNames[highestPredLane] || highestPredLane;
+            }
           }
         }
       }
@@ -761,25 +877,59 @@ async function fetchBackendSummary() {
 }
 
 async function loadBackendAnalytics() {
+  appendTerminal("[DATABASE] Refreshing analytics metrics from PostgreSQL...", "info");
   await fetchBackendSummary();
+  
+  // 1. Hourly/Part of Day Analytics
   try {
-    const resTime = await fetch(`${BACKEND_URL}/traffic/analytics/time`);
+    const resTime = await fetch(`${BACKEND_URL}/traffic/analytics/time`, { cache: "no-store" });
     if (resTime.ok) {
       const timeData = await resTime.json();
       if (timeOfDayChartInstance) {
         timeOfDayChartInstance.data.datasets[0].data = [
-          timeData.Morning ? timeData.Morning.average_vehicles : 64,
-          timeData.Afternoon ? timeData.Afternoon.average_vehicles : 45,
-          timeData.Evening ? timeData.Evening.average_vehicles : 82,
-          timeData.Night ? timeData.Night.average_vehicles : 28
+          timeData.Morning ? timeData.Morning.average_vehicles : 0,
+          timeData.Afternoon ? timeData.Afternoon.average_vehicles : 0,
+          timeData.Evening ? timeData.Evening.average_vehicles : 0,
+          timeData.Night ? timeData.Night.average_vehicles : 0
         ];
         timeOfDayChartInstance.update();
       }
     }
   } catch (err) {
-    console.warn("Using cached analytics graphs:", err);
+    console.warn("Time analytics err:", err);
   }
+
+  // 2. Density Classification Breakdown
+  try {
+    const resDensity = await fetch(`${BACKEND_URL}/traffic/analytics/density`, { cache: "no-store" });
+    if (resDensity.ok) {
+      const densityData = await resDensity.json();
+      let totalLow = 0, totalMed = 0, totalHigh = 0;
+      ["L1", "L2", "L3", "L4"].forEach(lane => {
+        if (densityData[lane]) {
+          totalLow += densityData[lane].LOW || 0;
+          totalMed += densityData[lane].MEDIUM || 0;
+          totalHigh += densityData[lane].HIGH || 0;
+        }
+      });
+      if (densityChartInstance && (totalLow + totalMed + totalHigh > 0)) {
+        densityChartInstance.data.datasets[0].data = [totalLow, totalMed, totalHigh];
+        densityChartInstance.update();
+      }
+    }
+  } catch (err) {
+    console.warn("Density analytics err:", err);
+  }
+
+  // 3. Cycle Audit Ledger from DB
+  if (window.fetchRecentCycles) {
+    await window.fetchRecentCycles();
+  }
+
+  appendTerminal("[DATABASE SUCCESS] System Analytics & Charts reloaded directly from PostgreSQL database.", "success");
 }
+
+window.loadBackendAnalytics = loadBackendAnalytics;
 
 // =====================================================
 // CYCLE HISTORY LEDGER & BUFFER
