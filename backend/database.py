@@ -1,15 +1,21 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import sessionmaker, declarative_base
 
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "YOUR_POSTGRES_PASSWORD")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", "5432"))
+DB_NAME = os.getenv("DB_NAME", "trafficintelli")
 
 DATABASE_URL = URL.create(
     drivername="postgresql+psycopg2",
-    username="postgres",
-    password="Dhruv@53#7",
-    host="localhost",
-    port=5432,
-    database="trafficintelli"
+    username=DB_USER,
+    password=DB_PASSWORD,
+    host=DB_HOST,
+    port=DB_PORT,
+    database=DB_NAME
 )
 
 

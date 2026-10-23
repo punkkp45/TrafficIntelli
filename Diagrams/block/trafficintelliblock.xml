@@ -1,0 +1,113 @@
+<mxfile host="app.diagrams.net" version="24.7.17">
+  <diagram id="TrafficIntelli-Architecture" name="TrafficIntelli Block Diagram">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Physical Hardware -->
+        <mxCell id="hardware" value="PHYSICAL INTERSECTION — HARDWARE LAYER" style="swimlane;html=1;startSize=34;horizontal=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="420" height="520" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ir" value="8 IR Sensors&#xa;2 Sensors per Lane&#xa;Vehicle Entry / Exit Detection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="80" y="100" width="170" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="rfid" value="MFRC522 RFID Reader&#xa;Emergency Vehicle Identification&#xa;(Ambulance / Fire Engine)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="260" y="100" width="170" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mega" value="ARDUINO MEGA 2560&#xa;Vehicle Counting&#xa;Lane Density Classification&#xa;Adaptive Cycle Control&#xa;Emergency Signal Preemption" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#548235;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="120" y="240" width="230" height="130" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="signals" value="Traffic Signal LEDs&#xa;4 Red + 4 Green&#xa;Four-Lane Signal Indication" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="140" y="430" width="190" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#548235;" edge="1" parent="1" source="ir" target="mega">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#548235;" edge="1" parent="1" source="rfid" target="mega">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="GPIO Control" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#548235;" edge="1" parent="1" source="mega" target="signals">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- IoT Gateway -->
+        <mxCell id="gateway" value="IoT COMMUNICATION GATEWAY" style="swimlane;html=1;startSize=34;horizontal=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="500" y="40" width="340" height="520" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="esp" value="ESP8266 NodeMCU&#xa;UART Serial Reception&#xa;Packet Validation&#xa;Wi-Fi Communication&#xa;HTTP POST /traffic/cycle&#xa;Retry Queue and Status API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="550" y="200" width="240" height="160" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e4" value="UART Serial&#xa;CYCLE|... packets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#6c8ebf;fontSize=12;" edge="1" parent="1" source="mega" target="esp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Backend -->
+        <mxCell id="backend" value="BACKEND AND AI PROCESSING LAYER" style="swimlane;html=1;startSize=34;horizontal=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="900" y="40" width="440" height="650" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="api" value="FastAPI Backend&#xa;REST API Endpoints&#xa;Cycle Data Validation&#xa;Telemetry Processing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="960" y="110" width="320" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="db" value="PostgreSQL Database&#xa;traffic_cycles Table&#xa;Cycle History, Counts, Density&#xa;Signal Timings and Timestamps" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="960" y="270" width="320" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ml" value="Machine Learning Prediction Engine&#xa;Scikit-learn Model&#xa;traffic_prediction_model.joblib&#xa;Forecast Next-Cycle Traffic Demand" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="950" y="440" width="200" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="optimizer" value="Adaptive Signal Optimizer&#xa;Predicted Queue Analysis&#xa;Green-Time Allocation&#xa;Minimum Green-Time Constraints" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="440" width="160" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e5" value="HTTP POST&#xa;/traffic/cycle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#6c8ebf;fontSize=12;" edge="1" parent="1" source="esp" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e6" value="Store Cycle Records" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#b85450;fontSize=12;" edge="1" parent="1" source="api" target="db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e7" value="Traffic Features" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9673a6;fontSize=12;" edge="1" parent="1" source="api" target="ml">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e8" value="Predicted Demand" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9673a6;fontSize=12;" edge="1" parent="1" source="ml" target="optimizer">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e9" value="Optimized Timings" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9673a6;fontSize=12;" edge="1" parent="1" source="optimizer" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Dashboard -->
+        <mxCell id="dashboard" value="WEB OPERATIONS DASHBOARD" style="swimlane;html=1;startSize=34;horizontal=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="500" y="740" width="840" height="300" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ui" value="TrafficIntelli Web Dashboard&#xa;HTML + CSS + JavaScript + Chart.js&#xa;Live Lane Density and Signal Status&#xa;AI Forecasts and Recommended Timings&#xa;Auto / AI Predictive / Manual Modes&#xa;Traffic Analytics and Cycle History" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="650" y="810" width="540" height="160" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e10" value="Fetch Analytics / Predictions" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;" edge="1" parent="1" source="ui" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e11" value="Live Data / Manual Commands" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#666666;fontSize=12;" edge="1" parent="1" source="ui" target="esp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

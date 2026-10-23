@@ -1,0 +1,249 @@
+================================================================================
+                       TRAFFICINTELLI™ EXECUTION COMMANDS
+================================================================================
+
+--------------------------------------------------------------------------------
+1. PREREQUISITES & DEPENDENCIES INSTALLATION
+--------------------------------------------------------------------------------
+# Open terminal / PowerShell and install required Python packages:
+pip install fastapi uvicorn[standard] sqlalchemy psycopg2-binary scikit-learn pandas numpy joblib xgboost pydantic requests
+
+
+--------------------------------------------------------------------------------
+2. DATABASE SETUP (POSTGRESQL)
+--------------------------------------------------------------------------------
+# Ensure PostgreSQL service is running on localhost:5432.
+# Default project credentials (from backend/database.py):
+# User: postgres | Password: <password> | Port: 5432 | DB: trafficintelli
+
+# Using psql command line (or pgAdmin):
+psql -U postgres
+
+# In psql shell, create database:
+CREATE DATABASE trafficintelli;
+\q
+
+# Note: Tables will automatically be created by SQLAlchemy when backend starts.
+
+
+--------------------------------------------------------------------------------
+3. RUNNING THE FASTAPI BACKEND SERVER
+--------------------------------------------------------------------------------
+# Terminal 1: Navigate to backend directory and start Uvicorn
+cd "d:\TrafficIntelli IOE Lab\backend"
+
+# Run FastAPI server on port 8001 (listening on 0.0.0.0 for ESP8266 / LAN access):
+python -m uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+
+# API Documentation will be live at:
+# Swagger UI: http://localhost:8001/docs
+# ReDoc:      http://localhost:8001/redoc
+
+
+--------------------------------------------------------------------------------
+4. HOW TO HOST THE OPERATIONS DASHBOARD
+--------------------------------------------------------------------------------
+# Note: The dashboard MUST be served over HTTP/HTTPS (not opened directly via
+# file:/// in browser) to prevent browser CORS, Fetch API, and security blocks.
+
+# --- OPTION A: Python Built-In Web Server (Recommended & Standard) ---
+# Terminal 2: Navigate to dashboard folder and start local HTTP server:
+cd "d:\TrafficIntelli IOE Lab\dashboard"
+python -m http.server 5500
+
+# Open in your browser:
+# Local PC:     http://localhost:5500
+# LAN / Mobile: http://<YOUR_PC_IPV4>:5500   (e.g., http://192.168.1.15:5500)
+
+
+# --- OPTION B: VS Code / Cursor "Live Server" Extension ---
+# 1. Install extension: "Live Server" (by Ritwick Dey).
+# 2. In file explorer, right-click "dashboard/index.html".
+# 3. Click "Open with Live Server".
+# 4. Browser automatically launches at: http://127.0.0.1:5500 (with auto-reload on save).
+
+
+# --- OPTION C: Node.js / NPX (Zero-install web server) ---
+cd "d:\TrafficIntelli IOE Lab\dashboard"
+npx serve -l 5500
+# OR:
+# npx http-server -p 5500
+
+
+# --- OPTION D: Host on Mobile Phones / Tablets on Same Wi-Fi ---
+# 1. Ensure PC and Phone are connected to the SAME Wi-Fi network (or mobile hotspot).
+# 2. Update 'BACKEND_URL' in dashboard/script.js to use your PC IPv4 instead of localhost:
+#    const BACKEND_URL = "http://<YOUR_PC_IPV4>:8001";
+# 3. Start dashboard with: python -m http.server 5500 --bind 0.0.0.0
+# 4. On phone browser, open: http://<YOUR_PC_IPV4>:5500
+
+
+# --- OPTION E: Public Remote Demo / Internet Hosting (Ngrok Tunneling) ---
+# To demo the dashboard to evaluators/judges outside your Wi-Fi:
+# 1. Install ngrok (https://ngrok.com)
+# 2. Expose FastAPI Backend:
+#    ngrok http 8001
+#    (Copy generated HTTPS URL -> paste into dashboard/script.js as BACKEND_URL)
+# 3. Expose Dashboard:
+#    ngrok http 5500
+#    (Share generated URL with anyone on the internet)
+
+
+--------------------------------------------------------------------------------
+5. IP ADDRESS CONFIGURATION GUIDE: WHEN & WHERE TO UPDATE
+--------------------------------------------------------------------------------
+# ==============================================================================
+# A. WHEN DO YOU NEED TO CHANGE IP ADDRESSES?
+# ==============================================================================
+# You MUST update IP addresses whenever ANY of the following happens:
+#
+# 1. Wi-Fi Network Change:
+#    - Moving between Home Wi-Fi, College/IOE Lab Wi-Fi, or Phone Mobile Hotspot.
+#    - Different routers assign completely different IP subnets (e.g., 192.168.1.x,
+#      10.x.x.x, 172.20.x.x).
+#
+# 2. PC IP Address Renewal (DHCP):
+#    - Reconnecting your laptop to Wi-Fi or rebooting the router can change your
+#      PC's local IPv4 address.
+#    - If this changes, the ESP8266 will fail to send cycle packets to FastAPI!
+#
+# 3. NodeMCU / ESP8266 Reconnection:
+#    - When NodeMCU connects to Wi-Fi, the router leases it a dynamic IP.
+#    - If this changes, the Web Dashboard cannot poll live sensor data or send
+#      manual control commands to the hardware.
+#
+# 4. Viewing Dashboard from a Phone/Tablet:
+#    - 'localhost' on a phone points to the phone itself, NOT your PC.
+#    - You must set BACKEND_URL in dashboard/script.js to your PC's LAN IPv4.
+
+# ==============================================================================
+# B. HOW TO FIND YOUR CURRENT IP ADDRESSES
+# ==============================================================================
+# 1. FIND YOUR PC's IPv4 ADDRESS:
+#    - Open PowerShell or Command Prompt and run:
+ipconfig
+#    - Look for your active adapter (e.g. "Wireless LAN adapter Wi-Fi").
+#    - Find: "IPv4 Address . . . . . . . . . . . : 192.168.X.X" (or 10.X.X.X)
+#    - This is your <PC_IPV4>.
+
+# 2. FIND YOUR ESP8266 / NODEMCU's IP ADDRESS:
+#    - Connect NodeMCU to PC via micro-USB.
+#    - Open Arduino IDE -> Tools -> Serial Monitor (set baud rate to 115200 or 9600).
+#    - Press the RST (Reset) button on the NodeMCU board.
+#    - Watch the startup log:
+#        WiFi SSID: <YourWiFi>
+#        ESP8266 IP Address: 192.168.X.X   <--- THIS IS YOUR <ESP_IP>
+#    - (Alternative): Open your smartphone Mobile Hotspot settings and check the
+#      "Connected Devices" list to view the IP assigned to the ESP.
+
+# ==============================================================================
+# C. WHERE TO UPDATE THE IP ADDRESSES (EXACT FILES & LINES)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# FILE 1: sketch_apr6b/sketch_apr6b.ino (ESP8266 Wi-Fi Gateway Firmware)
+# ------------------------------------------------------------------------------
+# Location: Lines 9 - 15 in sketch_apr6b/sketch_apr6b.ino
+#
+#   const char* ssid     = "YOUR_WIFI_NAME";        // <--- Your Wi-Fi / Hotspot name
+#   const char* password = "YOUR_WIFI_PASSWORD";    // <--- Your Wi-Fi password
+#
+#   const char* apiHost  = "192.168.X.X";           // <--- PUT YOUR PC's IPv4 HERE!
+#   const int   apiPort  = 8001;                    // FastAPI server port (8001)
+#
+# Why: NodeMCU uses apiHost to send HTTP POST /traffic/cycle packets to your PC.
+# Action: After editing, select NodeMCU board & port in Arduino IDE and click UPLOAD.
+
+# ------------------------------------------------------------------------------
+# FILE 2: dashboard/script.js (Web Operations Dashboard Engine)
+# ------------------------------------------------------------------------------
+# Location: Lines 9 - 10 in dashboard/script.js
+#
+#   const ESP_URL = "http://192.168.X.X";           // <--- PUT YOUR ESP8266 IP HERE!
+#   const BACKEND_URL = "http://localhost:8001";    // <--- Use localhost:8001 on PC, OR
+#                                                   //      "http://<PC_IPV4>:8001" if accessing
+#                                                   //      from phone/tablet/external device.
+#
+# Why: Dashboard fetches real-time telemetry from ESP_URL (/data, /status, /cmd)
+#      and historical analytics/ML predictions from BACKEND_URL (/traffic/cycle/latest, etc.)
+# Action: After editing, simply save the file and hard-refresh browser (Ctrl + F5).
+#         NO recompilation or uploading required!
+
+# ------------------------------------------------------------------------------
+# FILE 3: backend/test_cycle_ingest.py (CLI Ingestion Test Harness - Optional)
+# ------------------------------------------------------------------------------
+# When running test scripts across different machines on the LAN:
+#   python test_cycle_ingest.py http://<YOUR_PC_IPV4>:8001
+
+
+# ==============================================================================
+# D. SUMMARY MAPPING TABLE
+# ==============================================================================
+# | Setting Name  | File & Line Number               | Value To Set             | Target Component      |
+# |---------------|----------------------------------|--------------------------|-----------------------|
+# | ssid          | sketch_apr6b.ino (Line 9)        | "Your_WiFi_SSID"         | ESP8266 Wi-Fi Client  |
+# | password      | sketch_apr6b.ino (Line 10)       | "Your_WiFi_Password"     | ESP8266 Wi-Fi Client  |
+# | apiHost       | sketch_apr6b.ino (Line 14)       | "<PC_IPv4>"              | ESP -> FastAPI Post   |
+# | ESP_URL       | dashboard/script.js (Line 9)     | "http://<ESP8266_IP>"    | Dashboard -> ESP8266  |
+# | BACKEND_URL   | dashboard/script.js (Line 10)    | "http://localhost:8001"  | Dashboard -> FastAPI  |
+
+
+# ==============================================================================
+# E. CRITICAL LAB / DEMO NETWORKING TIPS
+# ==============================================================================
+# 1. Use a Mobile Hotspot for Demos:
+#    - University/college campus Wi-Fi networks frequently enable "AP Isolation"
+#      (client isolation), preventing devices from communicating with each other.
+#    - For 100% reliability, turn on your smartphone's Mobile Hotspot and connect
+#      both your PC and ESP8266 to it.
+#
+# 2. Windows Defender Firewall Permission:
+#    - When you run Uvicorn for the first time, Windows will ask for Firewall access.
+#    - Ensure "Private networks" is CHECKED so ESP8266 can reach port 8001.
+#    - Test connection from phone or browser: http://<PC_IPV4>:8001/health
+
+
+--------------------------------------------------------------------------------
+6. SEEDING DATA & SIMULATION TEST (NO HARDWARE NEEDED)
+--------------------------------------------------------------------------------
+# Seed 10,000 synthetic historical cycles into PostgreSQL for charts & analytics:
+cd "d:\TrafficIntelli IOE Lab\backend"
+python import_trafficintelli_dataset.py
+
+# Test cycle packet ingestion and verify DB & ML optimizer response:
+cd "d:\TrafficIntelli IOE Lab\backend"
+python test_cycle_ingest.py http://127.0.0.1:8001
+
+
+--------------------------------------------------------------------------------
+7. MACHINE LEARNING MODEL RETRAINING (OPTIONAL)
+--------------------------------------------------------------------------------
+# Train, compare regressors, and export model & preprocessor artifacts:
+cd "d:\TrafficIntelli IOE Lab\ml\models"
+python train_traffic_model.py
+
+# Test full ML prediction pipeline and model inference:
+python test_full_pipeline.py
+python test_optimizer.py
+
+
+--------------------------------------------------------------------------------
+8. HARDWARE FIRMWARE DEPLOYMENT (ARDUINO IDE)
+--------------------------------------------------------------------------------
+# 1. Arduino Mega 2560 (Traffic Controller & Sensors):
+#    - Open: sketch_apr6a/sketch_apr6a.ino in Arduino IDE
+#    - Board: "Arduino Mega or Mega 2560"
+#    - Processor: "ATmega2560"
+#    - Port: Select corresponding COM port
+#    - Click Upload
+
+# 2. NodeMCU / ESP8266 (WiFi Gateway & Web Server):
+#    - Open: sketch_apr6b/sketch_apr6b.ino in Arduino IDE
+#    - Verify WiFi SSID & Password in code (lines 9-10)
+#    - Verify apiHost IP matches PC's local IPv4 (check via 'ipconfig')
+#    - Board: "NodeMCU 1.0 (ESP-12E Module)"
+#    - Port: Select corresponding COM port
+#    - Click Upload
+#    - Open Serial Monitor (115200 baud) and note the assigned ESP8266 IP address.
+#    - Update 'ESP_URL' in dashboard/script.js with this IP address.
+================================================================================

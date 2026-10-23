@@ -1,0 +1,122 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" version="24.7.17">
+  <diagram id="TrafficIntelli-Minimal" name="TrafficIntelli Block Diagram">
+    <mxGraphModel dx="1900" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="TRAFFICINTELLI — SMART ADAPTIVE TRAFFIC MANAGEMENT SYSTEM" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=24;fontStyle=1;fontColor=#7030A0;" vertex="1" parent="1">
+          <mxGeometry x="320" y="10" width="1260" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="Real-Time Traffic Monitoring • Adaptive Signal Control • Emergency Priority • Analytics • Predictive Intelligence" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#6B7A90;" vertex="1" parent="1">
+          <mxGeometry x="360" y="48" width="1180" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="h1" value="PHYSICAL / EDGE LAYER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#efe7ff;strokeColor=#8b5cf6;fontColor=#5b21b6;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="0" y="88" width="225" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="h2" value="COMMUNICATION LAYER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1efff;strokeColor=#60a5fa;fontColor=#1e40af;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="305" y="88" width="220" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="h3" value="BACKEND / DATA LAYER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#4ade80;fontColor=#166534;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="625" y="88" width="235" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="h4" value="ANALYTICS / INTELLIGENCE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#fbbf24;fontColor=#92400e;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="945" y="88" width="255" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="h5" value="USER / PRESENTATION LAYER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce7f3;strokeColor=#f472b6;fontColor=#9d174d;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1275" y="88" width="245" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="ir" value="IR SENSOR ARRAY" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#f5f1ff;strokeColor=#8b5cf6;strokeWidth=2;fontColor=#3730a3;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="170" width="225" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="rfid" value="RFID READER&lt;br&gt;&lt;br&gt;MFRC522" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#fff7ed;strokeColor=#fb923c;strokeWidth=2;fontColor=#9a3412;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="370" width="225" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="signals" value="TRAFFIC SIGNALS&lt;br&gt;&lt;br&gt;RED LEDs • GREEN LEDs" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#f1f5f9;strokeColor=#94a3b8;strokeWidth=2;fontColor=#334155;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="540" width="225" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="mega" value="ARDUINO MEGA 2560" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#eef2ff;strokeColor=#6366f1;strokeWidth=2;fontColor=#3730a3;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="245" width="250" height="245" as="geometry" />
+        </mxCell>
+        <mxCell id="uart" value="UART / SERIAL" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#ffffff;strokeColor=#60a5fa;strokeWidth=2;fontColor=#1e3a8a;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="565" y="290" width="125" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="esp" value="ESP8266" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#eff6ff;strokeColor=#3b82f6;strokeWidth=2;fontColor=#1e40af;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="720" y="230" width="240" height="195" as="geometry" />
+        </mxCell>
+        <mxCell id="wifi" value="WI-FI / LAN" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#f0f9ff;strokeColor=#38bdf8;strokeWidth=2;fontColor=#0369a1;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="730" y="485" width="220" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="api" value="FASTAPI BACKEND" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#ecfdf5;strokeColor=#34d399;strokeWidth=2;fontColor=#065f46;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="230" width="240" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="orm" value="SQLALCHEMY ORM" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#f0fdf4;strokeColor=#4ade80;strokeWidth=2;fontColor=#166534;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1015" y="455" width="230" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="db" value="POSTGRESQL&lt;br&gt;&lt;br&gt;traffic_cycles" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#eff6ff;strokeColor=#3b82f6;strokeWidth=2;fontColor=#1e40af;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="610" width="260" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="analytics" value="TRAFFIC ANALYTICS ENGINE" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#fffbeb;strokeColor=#f59e0b;strokeWidth=2;fontColor=#92400e;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="230" width="250" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="predict" value="PREDICTIVE INTELLIGENCE" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#fef3c7;strokeColor=#f59e0b;strokeWidth=2;fontColor=#92400e;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="465" width="250" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="dash" value="TRAFFICINTELLI WEB DASHBOARD" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#fdf2f8;strokeColor=#ec4899;strokeWidth=2;fontColor=#9d174d;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1640" y="230" width="250" height="225" as="geometry" />
+        </mxCell>
+        <mxCell id="operator" value="OPERATOR" style="rounded=1;whiteSpace=wrap;html=1;arcSize=12;fillColor=#f8fafc;strokeColor=#94a3b8;strokeWidth=2;fontColor=#475569;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1640" y="520" width="250" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="SYSTEM FLOW&lt;br&gt;&lt;br&gt;Solid arrows = primary data flow&lt;br&gt;Dashed arrows = control / command communication&lt;br&gt;&lt;br&gt;Core pipeline: Sensors → Arduino → ESP8266 → FastAPI → PostgreSQL → Analytics → Dashboard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#cbd5e1;fontColor=#475569;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="565" y="830" width="690" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" value="Vehicle Detection" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#8b5cf6;fontSize=10;" edge="1" parent="1" source="ir" target="mega">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="Emergency RFID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#fb923c;fontSize=10;" edge="1" parent="1" source="rfid" target="mega">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="Signal Control" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#6366f1;fontSize=10;" edge="1" parent="1" source="mega" target="signals">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="Cycle Data" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#6366f1;fontSize=10;" edge="1" parent="1" source="mega" target="uart">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="UART" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#60a5fa;fontSize=10;" edge="1" parent="1" source="uart" target="esp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="Wi-Fi / HTTP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#38bdf8;fontSize=10;" edge="1" parent="1" source="esp" target="wifi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="HTTP POST /traffic/cycle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#3b82f6;fontSize=10;" edge="1" parent="1" source="esp" target="api">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="ORM" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#34d399;fontSize=10;" edge="1" parent="1" source="api" target="orm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" value="Store Cycle Data" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#3b82f6;fontSize=10;" edge="1" parent="1" source="orm" target="db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" value="Analytics API" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#f59e0b;fontSize=10;" edge="1" parent="1" source="api" target="analytics">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="Historical Data" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#f59e0b;fontSize=10;" edge="1" parent="1" source="db" target="predict">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" value="Predictions / Green Time" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#f59e0b;fontSize=10;" edge="1" parent="1" source="predict" target="analytics">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" value="Analytics API" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#ec4899;fontSize=10;" edge="1" parent="1" source="analytics" target="dash">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" value="User Interaction" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#64748b;fontSize=10;" edge="1" parent="1" source="operator" target="dash">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" value="Manual Commands /cmd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#ec4899;fontSize=10;dashed=1;" edge="1" parent="1" source="dash" target="esp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

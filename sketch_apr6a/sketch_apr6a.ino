@@ -89,6 +89,20 @@ void setup() {
   SPI.begin();
   mfrc522.PCD_Init();
 
+  Serial.println("========================================");
+  Serial.println("   TrafficIntelli Mega 2560 Online");
+  Serial.println("========================================");
+  Serial.print("RFID RC522 Reader Test: ");
+  mfrc522.PCD_DumpVersionToSerial();
+  byte v = mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
+  if (v == 0x00 || v == 0xFF) {
+    Serial.println("WARNING: RC522 NOT DETECTED or WIRING ERROR!");
+    Serial.println("Verify Mega SPI Pins: MISO=50, MOSI=51, SCK=52, SDA=53, RST=5, 3.3V (NOT 5V!)");
+  } else {
+    Serial.println("RC522 Initialized Successfully!");
+  }
+  Serial.println("========================================");
+
   for(int i=0;i<4;i++){
     for(int j=0;j<2;j++){
       pinMode(ir[i][j], INPUT);
@@ -433,22 +447,31 @@ void checkRFID(){
   if(!mfrc522.PICC_ReadCardSerial())
     return;
 
+  Serial.println();
+  Serial.print("💳 RFID Tag Detected! Scanned UID: {");
+  for(byte i = 0; i < mfrc522.uid.size; i++){
+    Serial.print("0x");
+    if(mfrc522.uid.uidByte[i] < 0x10) Serial.print("0");
+    Serial.print(mfrc522.uid.uidByte[i], HEX);
+    if(i < mfrc522.uid.size - 1) Serial.print(", ");
+  }
+  Serial.println("}");
+
   bool match = true;
 
   for(byte i = 0; i < 4; i++){
-
     if(mfrc522.uid.uidByte[i] != emergencyUID[i]){
-
       match = false;
       break;
     }
   }
 
   if(match){
-
-    Serial.println("🚑 EMERGENCY RFID");
-
+    Serial.println("🚑 EMERGENCY RFID MATCHED! Activating Emergency Mode on Lane 1...");
     startEmergency(RFID_LANE);
+  } else {
+    Serial.println("⚠️ RFID UID MISMATCH: This card does NOT match emergencyUID in line 8!");
+    Serial.println("👉 To register this card as the Emergency vehicle, update line 8 in sketch_apr6a.ino with the Scanned UID above.");
   }
 
   mfrc522.PICC_HaltA();

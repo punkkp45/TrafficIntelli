@@ -6,8 +6,8 @@
 // --- GLOBAL STATE ---
 // Modes: 'PROPORTIONAL' (default hardware), 'AI_PREDICTIVE' (ML optimization driven), 'MANUAL' (direct buttons)
 let CURRENT_MODE = "PROPORTIONAL";
-const ESP_URL = "http://10.233.3.146";
-const BACKEND_URL = "http://localhost:8001";
+const ESP_URL = "http://YOUR_ESP8266_IP"; // e.g., "http://192.168.1.100"
+const BACKEND_URL = "http://localhost:8001"; // or "http://YOUR_PC_IP:8001" for mobile/LAN access
 
 let trafficData = {
   mode: "DENSITY", // "NORMAL" or "DENSITY"
@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Polling loops
   setInterval(updateClock, 1000);
-  
+
   // Real-time tick & hardware sync loop
   setInterval(() => {
     if (CURRENT_MODE === "PROPORTIONAL" || CURRENT_MODE === "MANUAL") {
@@ -98,7 +98,7 @@ function setupNavigation() {
 // =====================================================
 // SYSTEM CONTROL MODES
 // =====================================================
-window.setSystemMode = function(mode) {
+window.setSystemMode = function (mode) {
   CURRENT_MODE = mode;
 
   // Update topbar pills
@@ -144,7 +144,7 @@ window.setSystemMode = function(mode) {
 // =====================================================
 // MANUAL LANE DISPATCH (DASHBOARD -> ESP -> MEGA)
 // =====================================================
-window.dispatchManualLane = async function(laneNumber) {
+window.dispatchManualLane = async function (laneNumber) {
   activeLane = laneNumber;
   trafficData.lanes.forEach((l, idx) => {
     if (idx === laneNumber - 1) {
@@ -243,7 +243,7 @@ function runLiveAIPredictiveTick() {
         trafficData.lanes[3].vehicles = parseInt(parts[3]) || trafficData.lanes[3].vehicles;
       }
     })
-    .catch(() => {});
+    .catch(() => { });
 
   updateDashboard();
 }
@@ -252,10 +252,10 @@ function triggerEmergencySimulation(laneIndex) {
   trafficData.emergency.detected = true;
   trafficData.emergency.lane = `L${laneIndex}`;
   activeLane = laneIndex; // Preempt active green
-  
+
   // Set remaining time to clearance priority
   trafficData.lanes[laneIndex - 1].remainingTime = 25;
-  
+
   updateEmergencyUI();
   updateSignals();
   appendTerminal(`[PRIORITY PREEMPTION] Emergency vehicle priority dispatched on Lane ${laneIndex}!`, "danger");
@@ -282,7 +282,7 @@ function calculateAdaptiveGreen(density) {
 function updateDashboard() {
   // Update KPI Cards
   document.getElementById("cycleNumber").textContent = cycleNumber;
-  
+
   const totalVehicles = trafficData.lanes.reduce((sum, l) => sum + l.vehicles, 0);
   const totalCleared = trafficData.lanes.reduce((sum, l) => sum + l.cleared, 0);
   document.getElementById("totalVehicles").textContent = totalVehicles;
@@ -449,7 +449,7 @@ function updateLaneTelemetry() {
       } else {
         row.classList.remove("active");
       }
-      
+
       const countEl = row.querySelector(".vol-count");
       if (countEl) countEl.textContent = lane.vehicles;
 
@@ -468,7 +468,7 @@ function updateLaneTelemetry() {
 // =====================================================
 // SIMULATE MANUAL VEHICLE SPIKE
 // =====================================================
-window.simulateHighDensity = function(laneNum) {
+window.simulateHighDensity = function (laneNum) {
   const lane = trafficData.lanes[laneNum - 1];
   lane.vehicles += 12;
   lane.density = calculateDensity(lane.vehicles);
@@ -625,7 +625,7 @@ async function pollEsp8266() {
 
         trafficData.mode = parts[4].trim();
         trafficData.emergency.detected = parts[5].trim() === "1" || parts[5].trim().toLowerCase() === "true";
-        
+
         const rxActive = parseInt(parts[6]);
         if (rxActive >= 1 && rxActive <= 4) activeLane = rxActive;
 
@@ -708,7 +708,7 @@ async function pollEsp8266() {
             tbody.innerHTML = ["L1", "L2", "L3", "L4"].map((lid, idx) => {
               const count = trafficData.lanes[idx].vehicles;
               const dens = trafficData.lanes[idx].density;
-              const rawPredVal = preds[`next_l${idx+1}_count`];
+              const rawPredVal = preds[`next_l${idx + 1}_count`];
               const predVal = rawPredVal !== undefined ? Math.round(Number(rawPredVal)) : count;
               const rawGreen = recGreens[lid] || 30;
               const green = Math.round(Number(rawGreen));
@@ -861,7 +861,7 @@ async function fetchBackendSummary() {
     const res = await fetch(`${BACKEND_URL}/traffic/analytics/summary`);
     if (!res.ok) throw new Error("Backend offline");
     const data = await res.json();
-    
+
     document.getElementById("analyticsTotalCycles").textContent = data.total_cycles;
     document.getElementById("analyticsTotalVehicles").textContent = data.total_vehicles;
     document.getElementById("analyticsAvgVehicles").textContent = data.average_vehicles_per_cycle;
@@ -879,7 +879,7 @@ async function fetchBackendSummary() {
 async function loadBackendAnalytics() {
   appendTerminal("[DATABASE] Refreshing analytics metrics from PostgreSQL...", "info");
   await fetchBackendSummary();
-  
+
   // 1. Hourly/Part of Day Analytics
   try {
     const resTime = await fetch(`${BACKEND_URL}/traffic/analytics/time`, { cache: "no-store" });
@@ -991,7 +991,7 @@ function renderHistoryTable() {
   });
 }
 
-window.fetchRecentCycles = async function() {
+window.fetchRecentCycles = async function () {
   try {
     const res = await fetch(`${BACKEND_URL}/traffic/analytics/cycles`);
     if (res.ok) {
@@ -1031,7 +1031,7 @@ function appendTerminal(msg, type = "") {
   box.scrollTop = box.scrollHeight;
 }
 
-window.clearTerminal = function() {
+window.clearTerminal = function () {
   const box = document.getElementById("terminalBox");
   if (box) box.innerHTML = '<div class="terminal-line system">[TERMINAL CLEARED] Listening for IOE bus events...</div>';
 };
